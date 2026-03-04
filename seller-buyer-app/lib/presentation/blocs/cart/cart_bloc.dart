@@ -5,96 +5,88 @@ import 'package:injectable/injectable.dart';
 
 import '../../../data/models/product/product_model.dart';
 
-// Cart item
+// ── Cart Item ─────────────────────────────────────────────────────────────────
 class CartItem extends Equatable {
   final ProductModel product;
+  final int qty;
   final String? variantId;
-  final int quantity;
-  const CartItem({required this.product, this.variantId, required this.quantity});
-  CartItem copyWith({int? quantity}) =>
-    CartItem(product: product, variantId: variantId, quantity: quantity ?? this.quantity);
-  int get totalTiyin => product.priceTiyin * quantity;
+
+  const CartItem({required this.product, this.qty = 1, this.variantId});
+
+  CartItem copyWith({int? qty}) => CartItem(product: product, qty: qty ?? this.qty, variantId: variantId);
+
+  int get totalTiyin => product.priceTiyin * qty;
+
+  Map<String, dynamic> toJson() => {'product': product.toJson(), 'qty': qty, 'variantId': variantId};
+  factory CartItem.fromJson(Map<String, dynamic> j) => CartItem(
+    product: ProductModel.fromJson(j['product'] as Map<String, dynamic>),
+    qty: j['qty'] as int,
+    variantId: j['variantId'] as String?,
+  );
+
   @override List<Object?> get props => [product.id, variantId];
 }
 
-// Events
+// ── Events ────────────────────────────────────────────────────────────────────
 abstract class CartEvent extends Equatable {
   @override List<Object?> get props => [];
 }
-class AddToCartEvent extends CartEvent {
-  final ProductModel product; final String? variantId;
-  AddToCartEvent({required this.product, this.variantId});
-  @override List<Object?> get props => [product.id, variantId];
-}
-class RemoveFromCartEvent extends CartEvent {
-  final String productId; final String? variantId;
-  RemoveFromCartEvent({required this.productId, this.variantId});
-  @override List<Object?> get props => [productId, variantId];
-}
-class UpdateQuantityEvent extends CartEvent {
-  final String productId; final String? variantId; final int quantity;
-  UpdateQuantityEvent({required this.productId, this.variantId, required this.quantity});
-  @override List<Object?> get props => [productId, quantity];
-}
-class ClearCartEvent extends CartEvent {}
+class CartAdd    extends CartEvent { final CartItem item; CartAdd(this.item); @override List<Object?> get props => [item]; }
+class CartRemove extends CartEvent { final String productId; CartRemove(this.productId); @override List<Object?> get props => [productId]; }
+class CartUpdate extends CartEvent { final String productId; final int qty; CartUpdate(this.productId, this.qty); @override List<Object?> get props => [productId, qty]; }
+class CartClear  extends CartEvent {}
 
-// State
+// ── State ─────────────────────────────────────────────────────────────────────
 class CartState extends Equatable {
   final List<CartItem> items;
   const CartState({this.items = const []});
-  int get itemCount => items.fold(0, (acc, i) => acc + i.quantity);
-  int get totalTiyin => items.fold(0, (acc, i) => acc + i.totalTiyin);
-  int get totalSum => totalTiyin ~/ 100;
-  bool get isEmpty => items.isEmpty;
-  @override List<Object?> get props => [items];
+
+  int get totalQty    => items.fold(0, (s, i) => s + i.qty);
+  int get totalTiyin  => items.fold(0, (s, i) => s + i.totalTiyin);
+  bool contains(String id) => items.any((i) => i.product.id == id);
+
+  CartState copyWith({List<CartItem>? items}) => CartState(items: items ?? this.items);
+
+  Map<String, dynamic> toJson() => {'items': items.map((i) => i.toJson()).toList()};
+  factory CartState.fromJson(Map<String, dynamic> j) => CartState(
+    items: (j['items'] as List<dynamic>? ?? []).map((e) => CartItem.fromJson(e as Map<String, dynamic>)).toList(),
+  );
+
+  @override List<Object?> get props => [items.length, totalTiyin];
 }
 
+// ── Bloc ──────────────────────────────────────────────────────────────────────
 @injectable
 class CartBloc extends HydratedBloc<CartEvent, CartState> {
   CartBloc() : super(const CartState()) {
-    on<AddToCartEvent>(_onAdd);
-    on<RemoveFromCartEvent>(_onRemove);
-    on<UpdateQuantityEvent>(_onUpdate);
-    on<ClearCartEvent>((_, emit) => emit(const CartState()));
+    on<CartAdd>(_onAdd);
+    on<CartRemove>(_onRemove);
+    on<CartUpdate>(_onUpdate);
+    on<CartClear>((_, emit) => emit(const CartState()));
   }
 
-  void _onAdd(AddToCartEvent e, Emitter<CartState> emit) {
-    final idx = state.items.indexWhere(
-      (i) => i.product.id == e.product.id && i.variantId == e.variantId,
-    );
+  void _onAdd(CartAdd e, Emitter<CartState> emit) {
     final items = List<CartItem>.from(state.items);
+    final idx   = items.indexWhere((i) => i.product.id == e.item.product.id && i.variantId == e.item.variantId);
     if (idx >= 0) {
-      items[idx] = items[idx].copyWith(quantity: items[idx].quantity + 1);
+      items[idx] = items[idx].copyWith(qty: items[idx].qty + 1);
     } else {
-      items.add(CartItem(product: e.product, variantId: e.variantId, quantity: 1));
+      items.add(e.item);
     }
-    emit(CartState(items: items));
+    emit(state.copyWith(items: items));
   }
 
-  void _onRemove(RemoveFromCartEvent e, Emitter<CartState> emit) {
-    emit(CartState(
-      items: state.items.where(
-        (i) => !(i.product.id == e.productId && i.variantId == e.variantId)
-      ).toList(),
+  void _onRemove(CartRemove e, Emitter<CartState> emit) {
+    emit(state.copyWith(items: state.items.where((i) => i.product.id != e.productId).toList()));
+  }
+
+  void _onUpdate(CartUpdate e, Emitter<CartState> emit) {
+    if (e.qty <= 0) { add(CartRemove(e.productId)); return; }
+    emit(state.copyWith(
+      items: state.items.map((i) => i.product.id == e.productId ? i.copyWith(qty: e.qty) : i).toList(),
     ));
   }
 
-  void _onUpdate(UpdateQuantityEvent e, Emitter<CartState> emit) {
-    if (e.quantity <= 0) {
-      add(RemoveFromCartEvent(productId: e.productId, variantId: e.variantId));
-      return;
-    }
-    final items = state.items.map((i) {
-      if (i.product.id == e.productId && i.variantId == e.variantId) {
-        return i.copyWith(quantity: e.quantity);
-      }
-      return i;
-    }).toList();
-    emit(CartState(items: items));
-  }
-
-  @override
-  CartState fromJson(Map<String, dynamic> json) => const CartState(); // skip hydration for now
-  @override
-  Map<String, dynamic>? toJson(CartState state) => null;
+  @override CartState fromJson(Map<String, dynamic> json) => CartState.fromJson(json);
+  @override Map<String, dynamic>? toJson(CartState state) => state.toJson();
 }

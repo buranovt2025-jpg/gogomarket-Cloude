@@ -2,15 +2,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../data/models/product/product_model.dart';
 import '../../../core/network/api_client.dart';
+import '../../../data/models/product/product_model.dart';
 
 abstract class ProductEvent extends Equatable {
   @override List<Object?> get props => [];
 }
-class LoadProductEvent extends ProductEvent {
+class ProductLoadEvent extends ProductEvent {
   final String id;
-  LoadProductEvent(this.id);
+  ProductLoadEvent(this.id);
   @override List<Object?> get props => [id];
 }
 
@@ -27,23 +27,21 @@ class ProductLoaded  extends ProductState {
 class ProductError extends ProductState {
   final String message;
   ProductError(this.message);
+  @override List<Object?> get props => [message];
 }
 
 @injectable
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
   final ApiClient _api;
-
   ProductBloc(this._api) : super(ProductInitial()) {
-    on<LoadProductEvent>(_onLoad);
-  }
-
-  Future<void> _onLoad(LoadProductEvent e, Emitter<ProductState> emit) async {
-    emit(ProductLoading());
-    try {
-      final product = await _api.getProduct(e.id);
-      emit(ProductLoaded(product));
-    } catch (err) {
-      emit(ProductError(err.toString()));
-    }
+    on<ProductLoadEvent>((e, emit) async {
+      emit(ProductLoading());
+      try {
+        final p = await _api.getProduct(e.id);
+        emit(ProductLoaded(p));
+      } catch (err) {
+        emit(ProductError(err.toString()));
+      }
+    });
   }
 }

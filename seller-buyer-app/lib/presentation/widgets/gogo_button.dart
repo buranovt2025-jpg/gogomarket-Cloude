@@ -1,76 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constants/app_colors.dart';
 
-enum GogoButtonVariant { primary, outline, ghost, green, gold, red }
+enum ButtonVariant { primary, outline, ghost, green, gold, red }
 
 class GogoButton extends StatelessWidget {
   final String label;
-  final VoidCallback? onTap;
-  final GogoButtonVariant variant;
-  final bool loading;
-  final bool expanded;
+  final ButtonVariant variant;
+  final VoidCallback? onPressed;
   final IconData? icon;
-  final double height;
+  final bool loading;
+  final double? height;
 
   const GogoButton({
     super.key,
     required this.label,
-    this.onTap,
-    this.variant = GogoButtonVariant.primary,
-    this.loading = false,
-    this.expanded = true,
+    this.variant  = ButtonVariant.primary,
+    this.onPressed,
     this.icon,
-    this.height = 52,
+    this.loading  = false,
+    this.height,
   });
 
   Color get _bg => switch (variant) {
-    GogoButtonVariant.primary => AppColors.accent,
-    GogoButtonVariant.green   => AppColors.green,
-    GogoButtonVariant.gold    => AppColors.gold,
-    GogoButtonVariant.red     => AppColors.red,
-    _                         => Colors.transparent,
+    ButtonVariant.primary => AppColors.accent,
+    ButtonVariant.green   => AppColors.green,
+    ButtonVariant.gold    => AppColors.gold,
+    ButtonVariant.red     => AppColors.red,
+    _                     => Colors.transparent,
   };
 
   Color get _fg => switch (variant) {
-    GogoButtonVariant.outline => AppColors.accent,
-    GogoButtonVariant.ghost   => AppColors.textSecondary,
-    _                         => Colors.white,
+    ButtonVariant.outline => AppColors.accent,
+    ButtonVariant.ghost   => AppColors.textSecondary,
+    _                     => Colors.white,
+  };
+
+  Border? get _border => switch (variant) {
+    ButtonVariant.outline => Border.all(color: AppColors.accent, width: 1.5),
+    ButtonVariant.ghost   => Border.all(color: AppColors.border),
+    _                     => null,
   };
 
   @override
   Widget build(BuildContext context) {
-    final child = loading
-      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-      : Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[Icon(icon, size: 18, color: _fg), const SizedBox(width: 6)],
-            Text(label, style: TextStyle(color: _fg, fontSize: 15, fontWeight: FontWeight.w600, fontFamily: 'DM Sans')),
-          ],
-        );
-
-    return SizedBox(
-      height: height,
-      width: expanded ? double.infinity : null,
-      child: variant == GogoButtonVariant.outline
-        ? OutlinedButton(
-            onPressed: onTap,
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.accent),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            child: child,
-          )
-        : ElevatedButton(
-            onPressed: onTap,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _bg,
-              foregroundColor: _fg,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            child: child,
+    return GestureDetector(
+      onTap: onPressed != null && !loading ? onPressed : null,
+      child: AnimatedOpacity(
+        opacity: onPressed == null ? 0.5 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          height: height ?? 48.h,
+          decoration: BoxDecoration(
+            color: onPressed == null ? AppColors.bgCard : _bg,
+            borderRadius: BorderRadius.circular(14),
+            border: _border,
           ),
+          child: Center(
+            child: loading
+              ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: _fg))
+              : Row(mainAxisSize: MainAxisSize.min, children: [
+                  if (icon != null) ...[
+                    Icon(icon, color: _fg, size: 16.sp),
+                    SizedBox(width: 6.w),
+                  ],
+                  Text(label, style: TextStyle(color: _fg, fontSize: 14.sp, fontWeight: FontWeight.w600)),
+                ]),
+          ),
+        ),
+      ),
     );
   }
 }

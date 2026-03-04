@@ -6,9 +6,9 @@ import '../constants/app_constants.dart';
 import '../../data/models/user/user_model.dart';
 import '../../data/models/product/product_model.dart';
 import '../../data/models/order/order_model.dart';
+import '../../data/models/seller/seller_model.dart';
 import '../../data/models/chat/chat_model.dart';
 import '../../data/models/chat/message_model.dart';
-import '../../data/models/seller/seller_model.dart';
 import '../../data/models/paginated_response.dart';
 
 part 'api_client.g.dart';
@@ -19,7 +19,7 @@ abstract class ApiClient {
   @factoryMethod
   factory ApiClient(Dio dio) = _ApiClient;
 
-  // ── Auth ────────────────────────────────────────────────────
+  // Auth
   @POST('/auth/send-otp')
   Future<void> sendOtp(@Body() Map<String, dynamic> body);
 
@@ -32,90 +32,101 @@ abstract class ApiClient {
   @GET('/auth/me')
   Future<UserModel> getMe();
 
-  // ── Products ─────────────────────────────────────────────────
-  @GET('/products')
-  Future<PaginatedResponse<ProductModel>> getProducts({
-    @Query('page')      int page = 1,
-    @Query('limit')     int limit = 20,
-    @Query('q')         String? query,
-    @Query('category')  String? categoryId,
-    @Query('seller_id') String? sellerId,
-    @Query('price_min') int? priceMin,
-    @Query('price_max') int? priceMax,
-    @Query('sort')      String sort = 'popular',
+  // Onboarding
+  @PATCH('/users/me')
+  Future<UserModel> updateProfile(@Body() Map<String, dynamic> body);
+
+  // Seller registration
+  @POST('/sellers/register')
+  Future<Map<String, dynamic>> registerSeller(@Body() Map<String, dynamic> body);
+
+  @GET('/sellers/:id')
+  Future<SellerModel> getSeller(@Path('id') String id);
+
+  // Feed & Products
+  @GET('/feed')
+  Future<PaginatedResponse<ProductModel>> getFeed({
+    @Query('mode')   String mode  = 'discover',
+    @Query('page')   int page     = 1,
+    @Query('limit')  int limit    = 20,
+    @Query('cat')    String? category,
   });
 
-  @GET('/products/{id}')
+  @GET('/products')
+  Future<PaginatedResponse<ProductModel>> getProducts({
+    @Query('q')      String? query,
+    @Query('cat')    String? category,
+    @Query('page')   int page  = 1,
+    @Query('limit')  int limit = 20,
+    @Query('sort')   String sort = 'popular',
+  });
+
+  @GET('/products/:id')
   Future<ProductModel> getProduct(@Path('id') String id);
 
   @POST('/products')
   Future<ProductModel> createProduct(@Body() Map<String, dynamic> body);
 
-  @PATCH('/products/{id}')
-  Future<ProductModel> updateProduct(
-    @Path('id') String id,
-    @Body() Map<String, dynamic> body,
-  );
+  @PATCH('/products/:id')
+  Future<ProductModel> updateProduct(@Path('id') String id, @Body() Map<String, dynamic> body);
 
-  @DELETE('/products/{id}')
+  @DELETE('/products/:id')
   Future<void> deleteProduct(@Path('id') String id);
 
-  // ── Orders ───────────────────────────────────────────────────
+  // Orders
+  @GET('/orders')
+  Future<List<OrderModel>> getOrders({@Query('role') String role = 'buyer'});
+
+  @GET('/orders/:id')
+  Future<OrderModel> getOrder(@Path('id') String id);
+
   @POST('/orders')
   Future<OrderModel> createOrder(@Body() Map<String, dynamic> body);
 
-  @GET('/orders')
-  Future<PaginatedResponse<OrderModel>> getOrders({
-    @Query('page')   int page = 1,
-    @Query('limit')  int limit = 20,
-    @Query('status') String? status,
-  });
+  @PATCH('/orders/:id/status')
+  Future<OrderModel> updateOrderStatus(@Path('id') String id, @Body() Map<String, dynamic> body);
 
-  @GET('/orders/{id}')
-  Future<OrderModel> getOrder(@Path('id') String id);
+  // Cart → Order
+  @POST('/orders/from-cart')
+  Future<OrderModel> checkoutCart(@Body() Map<String, dynamic> body);
 
-  @PATCH('/orders/{id}/status')
-  Future<OrderModel> updateOrderStatus(
-    @Path('id') String id,
-    @Body() Map<String, dynamic> body,
-  );
-
-  // ── Chats ────────────────────────────────────────────────────
+  // Chats
   @GET('/chats')
   Future<List<ChatModel>> getChats();
+
+  @GET('/chats/:id/messages')
+  Future<List<MessageModel>> getMessages(@Path('id') String chatId, {
+    @Query('before') String? before,
+    @Query('limit')  int limit = 30,
+  });
 
   @POST('/chats')
   Future<ChatModel> createChat(@Body() Map<String, dynamic> body);
 
-  @GET('/chats/{id}/messages')
-  Future<List<MessageModel>> getMessages(
-    @Path('id') String chatId, {
-    @Query('limit') int limit = 30,
-    @Query('before') String? before,
-  });
+  @POST('/chats/:id/messages')
+  Future<MessageModel> sendMessage(@Path('id') String chatId, @Body() Map<String, dynamic> body);
 
-  // ── Sellers ──────────────────────────────────────────────────
-  @GET('/sellers/{id}')
-  Future<SellerModel> getSeller(@Path('id') String id);
-
-  @GET('/sellers/me/dashboard')
-  Future<Map<String, dynamic>> getSellerDashboard();
-
-  @PATCH('/sellers/me')
-  Future<SellerModel> updateSeller(@Body() Map<String, dynamic> body);
-
-  @POST('/sellers/register')
-  Future<SellerModel> registerSeller(@Body() Map<String, dynamic> body);
-
-  // ── Notifications ────────────────────────────────────────────
+  // Notifications
   @GET('/notifications')
-  Future<List<Map<String, dynamic>>> getNotifications({
-    @Query('page') int page = 1,
-  });
-
-  @PATCH('/notifications/{id}/read')
-  Future<void> markRead(@Path('id') String id);
+  Future<List<Map<String, dynamic>>> getNotifications();
 
   @PATCH('/notifications/read-all')
   Future<void> markAllRead();
+
+  // Seller dashboard
+  @GET('/sellers/me/analytics')
+  Future<Map<String, dynamic>> getAnalytics({@Query('period') String period = '7d'});
+
+  @GET('/sellers/me/orders')
+  Future<List<OrderModel>> getSellerOrders({@Query('status') String? status});
+
+  // Admin
+  @GET('/admin/dashboard')
+  Future<Map<String, dynamic>> getDashboard();
+
+  @GET('/admin/sellers/pending')
+  Future<List<Map<String, dynamic>>> getPendingSellers();
+
+  @POST('/admin/sellers/:id/verify')
+  Future<void> verifySeller(@Path('id') String id, @Body() Map<String, dynamic> body);
 }
