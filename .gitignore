@@ -1,0 +1,23 @@
+# Flutter
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/*.g.dart
+**/injection.config.dart
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Node
+**/node_modules/
+**/.env
+**/dist/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

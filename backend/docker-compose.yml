@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: gogomarket-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gogonet
+    volumes:
+      - ./logs:/app/logs
+
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: gogomarket-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       gogomarket
+      POSTGRES_USER:     gogomarket
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gogomarket"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - gogonet
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: gogomarket-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispass}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - gogonet
+    ports:
+      - "6379:6379"
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: gogomarket-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - api
+    networks:
+      - gogonet
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  gogonet:
+    driver: bridge

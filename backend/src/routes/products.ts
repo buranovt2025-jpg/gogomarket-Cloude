@@ -1,0 +1,139 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { db } from '../db';
+import { products, productPhotos, sellers } from '../db/schema';
+import { authenticate, requireSeller } from '../middleware/auth';
+import { AppError } from '../middleware/errorHandler';
+import { eq, and, gte, lte, ilike, desc, asc, isNull } from 'drizzle-orm';
+
+const router = Router();
+
+// GET /v1/products — public, with filters
+router.get('/', async (req, res) => {
+  const q = z.object({
+    page:      z.coerce.number().min(1).default(1),
+    limit:     z.coerce.number().min(1).max(50).default(20),
+    category:  z.string().uuid().optional(),
+    seller_id: z.string().uuid().optional(),
+    q:         z.string().max(100).optional(),
+    price_min: z.coerce.number().optional(),
+    price_max: z.coerce.number().optional(),
+    sort:      z.enum(['popular', 'new', 'price_asc', 'price_desc', 'rating']).default('popular'),
+  }).parse(req.query);
+
+  const where = [
+    eq(products.status, 'active'),
+    isNull(products.deletedAt),
+    q.category  ? eq(products.categoryId,  q.category)  : undefined,
+    q.seller_id ? eq(products.sellerId,   q.seller_id) : undefined,
+    q.q         ? ilike(products.title,   `%${q.q}%`)  : undefined,
+    q.price_min ? gte(products.priceTiyin, q.price_min * 100) : undefined,
+    q.price_max ? lte(products.priceTiyin, q.price_max * 100) : undefined,
+  ].filter(Boolean) as any[];
+
+  const sortMap: Record<string, any> = {
+    popular:    desc(products.saleCount),
+    new:        desc(products.createdAt),
+    price_asc:  asc(products.priceTiyin),
+    price_desc: desc(products.priceTiyin),
+    rating:     desc(products.avgRating),
+  };
+
+  const items = await db.select().from(products)
+    .where(and(...where))
+    .orderBy(sortMap[q.sort])
+    .limit(q.limit)
+    .offset((q.page - 1) * q.limit);
+
+  res.json({ items, page: q.page, limit: q.limit });
+});
+
+// GET /v1/products/:id — public
+router.get('/:id', async (req, res) => {
+  const [product] = await db.select().from(products)
+    .where(and(eq(products.id, req.params.id), isNull(products.deletedAt)))
+    .limit(1);
+  if (!product) throw new AppError(404, 'Product not found');
+
+  const photos = await db.select().from(productPhotos)
+    .where(eq(productPhotos.productId, product.id))
+    .orderBy(asc(productPhotos.order));
+
+  // Increment view count (async, no await)
+  db.update(products)
+    .set({ viewCount: (product.viewCount || 0) + 1 })
+    .where(eq(products.id, product.id))
+    .catch(() => {});
+
+  res.json({ ...product, photos });
+});
+
+// POST /v1/products — seller only
+router.post('/', authenticate, requireSeller, async (req, res) => {
+  const body = z.object({
+    title:       z.string().min(3).max(200),
+    description: z.string().max(2000).optional(),
+    categoryId:  z.string().uuid().optional(),
+    priceTiyin:  z.number().int().positive(),
+    oldPriceTiyin: z.number().int().positive().optional(),
+    stock:       z.number().int().min(0),
+    condition:   z.enum(['new', 'used']).default('new'),
+    deliveryType: z.enum(['self', 'courier', 'both']).default('self'),
+    tags:        z.array(z.string()).max(10).optional(),
+    status:      z.enum(['draft', 'active']).default('draft'),
+  }).parse(req.body);
+
+  // Get seller profile
+  const [seller] = await db.select().from(sellers)
+    .where(eq(sellers.userId, req.user!.userId)).limit(1);
+  if (!seller || !seller.isVerified) {
+    throw new AppError(403, 'Seller not verified');
+  }
+
+  const [product] = await db.insert(products)
+    .values({ ...body, sellerId: seller.id })
+    .returning();
+
+  res.status(201).json(product);
+});
+
+// PATCH /v1/products/:id — owner only
+router.patch('/:id', authenticate, requireSeller, async (req, res) => {
+  const [existing] = await db.select().from(products)
+    .where(and(eq(products.id, req.params.id), isNull(products.deletedAt))).limit(1);
+
+  if (!existing) throw new AppError(404, 'Product not found');
+
+  const [seller] = await db.select().from(sellers)
+    .where(eq(sellers.userId, req.user!.userId)).limit(1);
+  if (!seller || existing.sellerId !== seller.id) {
+    throw new AppError(403, 'Not your product');
+  }
+
+  const updates = z.object({
+    title:        z.string().min(3).max(200).optional(),
+    description:  z.string().optional(),
+    priceTiyin:   z.number().positive().optional(),
+    oldPriceTiyin: z.number().positive().optional(),
+    stock:        z.number().min(0).optional(),
+    status:       z.enum(['draft', 'active', 'out_of_stock']).optional(),
+    tags:         z.array(z.string()).optional(),
+  }).parse(req.body);
+
+  const [updated] = await db.update(products)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(products.id, req.params.id))
+    .returning();
+
+  res.json(updated);
+});
+
+// DELETE /v1/products/:id — soft delete
+router.delete('/:id', authenticate, requireSeller, async (req, res) => {
+  await db.update(products)
+    .set({ deletedAt: new Date(), status: 'deleted' })
+    .where(eq(products.id, req.params.id));
+  res.json({ message: 'Product deleted' });
+});
+
+export default router;

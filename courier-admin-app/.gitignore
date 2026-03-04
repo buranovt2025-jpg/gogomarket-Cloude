@@ -1,0 +1,13 @@
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.g.dart
+injection.config.dart
+google-services.json
+GoogleService-Info.plist
+.idea/
+.vscode/
+android/local.properties
+android/.gradle/
+ios/Pods/
