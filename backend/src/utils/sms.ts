@@ -2,8 +2,11 @@ import axios from 'axios';
 import { redis } from './redis';
 import { logger } from './logger';
 
-const OTP_TTL = 60; // seconds
+const OTP_TTL    = 60;
 const OTP_PREFIX = 'otp:';
+
+// Test numbers always get code 1234
+const TEST_PHONES = ['+998907654321', '+998901234567', '+998900000000'];
 
 export const generateOtp = () =>
   Math.floor(1000 + Math.random() * 9000).toString();
@@ -23,7 +26,7 @@ let eskizToken: string | null = null;
 const getEskizToken = async (): Promise<string> => {
   if (eskizToken) return eskizToken;
   const { data } = await axios.post('https://notify.eskiz.uz/api/auth/login', {
-    email: process.env.ESKIZ_EMAIL,
+    email:    process.env.ESKIZ_EMAIL,
     password: process.env.ESKIZ_PASSWORD,
   });
   eskizToken = data.data.token;
@@ -49,8 +52,12 @@ export const sendSms = async (phone: string, text: string): Promise<void> => {
 };
 
 export const sendOtp = async (phone: string): Promise<string> => {
-  const otp = generateOtp();
+  const otp = TEST_PHONES.includes(phone) ? '1234' : generateOtp();
   await saveOtp(phone, otp);
-  await sendSms(phone, `GogoMarket: ваш код ${otp}. Никому не сообщайте.`);
+  if (TEST_PHONES.includes(phone)) {
+    logger.info({ phone }, '[TEST] OTP=1234 for test number');
+  } else {
+    await sendSms(phone, `GogoMarket: ваш код ${otp}. Никому не сообщайте.`);
+  }
   return otp;
 };
