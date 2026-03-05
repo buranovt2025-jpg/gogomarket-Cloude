@@ -5,7 +5,7 @@ export const rateLimiter = rateLimit({
   max: Number(process.env.RATE_LIMIT_MAX) || 100,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.path === '/health',
+  skip: (req: { path: string }) => req.path === '/health',
   message: { error: 'Too many requests, please try again later' },
 });
 

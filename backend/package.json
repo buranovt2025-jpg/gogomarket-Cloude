@@ -1,7 +1,7 @@
 {
   "name": "gogomarket-backend",
   "version": "1.0.0",
-  "description": "GogoMarket API — Social e-commerce for Uzbekistan",
+  "description": "GogoMarket API \u2014 Social e-commerce for Uzbekistan",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -36,7 +36,8 @@
     "pino-http": "^9.0.0",
     "axios": "^1.6.0",
     "date-fns": "^3.3.0",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "express-rate-limit": "^7.4.1"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
@@ -57,6 +58,7 @@
     "@types/supertest": "^6.0.0",
     "eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0"
+    "@typescript-eslint/parser": "^7.0.0",
+    "@types/compression": "^1.7.5"
   }
 }
