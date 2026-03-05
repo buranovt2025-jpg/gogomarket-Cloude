@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:injectable/injectable.dart';
 
-@injectable
-class ThemeCubit extends HydratedCubit<ThemeMode> {
-  ThemeCubit() : super(ThemeMode.dark);
+import '../../../core/constants/app_constants.dart';
 
-  void setTheme(ThemeMode mode) => emit(mode);
-  void toggle() => emit(state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
+@singleton
+class ThemeCubit extends Cubit<ThemeMode> {
+  ThemeCubit() : super(_load());
 
-  @override
-  ThemeMode fromJson(Map<String, dynamic> json) =>
-    ThemeMode.values.firstWhere(
-      (e) => e.name == (json['theme'] as String? ?? 'dark'),
-      orElse: () => ThemeMode.dark,
-    );
+  static ThemeMode _load() {
+    final box = Hive.box(AppConstants.settingsBox);
+    final v   = box.get(AppConstants.themeKey, defaultValue: 'dark') as String;
+    return v == 'light' ? ThemeMode.light : ThemeMode.dark;
+  }
 
-  @override
-  Map<String, dynamic>? toJson(ThemeMode state) => {'theme': state.name};
+  void toggleTheme() {
+    final next = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    final box  = Hive.box(AppConstants.settingsBox);
+    box.put(AppConstants.themeKey, next == ThemeMode.dark ? 'dark' : 'light');
+    emit(next);
+  }
 }

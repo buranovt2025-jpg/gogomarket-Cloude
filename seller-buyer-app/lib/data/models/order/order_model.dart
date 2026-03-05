@@ -1,74 +1,69 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/equatable.dart';
-
 part 'order_model.g.dart';
 
-@JsonSerializable()
-class OrderItemModel {
-  final String id;
-  final String productId;
-  final String? variantId;
-  final String title;
-  final String? photoUrl;
-  final int quantity;
-  final int priceTiyin;
-
-  const OrderItemModel({
-    required this.id, required this.productId, this.variantId,
-    required this.title, this.photoUrl,
-    required this.quantity, required this.priceTiyin,
-  });
-
-  factory OrderItemModel.fromJson(Map<String, dynamic> json) =>
-    _$OrderItemModelFromJson(json);
-  Map<String, dynamic> toJson() => _$OrderItemModelToJson(this);
-
-  int get totalTiyin => priceTiyin * quantity;
-}
-
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class OrderModel extends Equatable {
-  final String id;
-  final String buyerId;
-  final String sellerId;
-  final String? courierId;
-  final String status;
-  final int totalTiyin;
-  final String deliveryService;
-  final String? deliveryAddress;
-  final String? trackingId;
-  final String? buyerNote;
+  final String   id;
+  final String   buyerId;
+  final String   sellerId;
+  final String   status;
+  final int      totalTiyin;
+  final String?  deliveryAddress;
+  final double?  deliveryLat;
+  final double?  deliveryLng;
+  final String   deliveryService;
+  final String?  buyerNote;
+  final String?  trackingCode;
   final List<OrderItemModel> items;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final DateTime? completedAt;
 
   const OrderModel({
     required this.id,
     required this.buyerId,
     required this.sellerId,
-    this.courierId,
     required this.status,
     required this.totalTiyin,
-    required this.deliveryService,
     this.deliveryAddress,
-    this.trackingId,
+    this.deliveryLat,
+    this.deliveryLng,
+    required this.deliveryService,
     this.buyerNote,
-    this.items = const [],
+    this.trackingCode,
+    required this.items,
     required this.createdAt,
     required this.updatedAt,
-    this.completedAt,
   });
 
-  factory OrderModel.fromJson(Map<String, dynamic> json) =>
-    _$OrderModelFromJson(json);
-  Map<String, dynamic> toJson() => _$OrderModelToJson(this);
-
-  int get totalSum => totalTiyin ~/ 100;
-  bool get isActive => !['done', 'cancelled'].contains(status);
-  bool get isDispute => status == 'dispute';
-  bool get canReview => status == 'done';
+  factory OrderModel.fromJson(Map<String, dynamic> json) => _\$OrderModelFromJson(json);
+  Map<String, dynamic> toJson() => _\$OrderModelToJson(this);
 
   @override
-  List<Object?> get props => [id, status, totalTiyin];
+  List<Object?> get props => [id, status];
+}
+
+@JsonSerializable()
+class OrderItemModel extends Equatable {
+  final String  id;
+  final String  productId;
+  final String? variantId;
+  final int     quantity;
+  final int     priceTiyin;
+  final String  title;
+
+  const OrderItemModel({
+    required this.id,
+    required this.productId,
+    this.variantId,
+    required this.quantity,
+    required this.priceTiyin,
+    required this.title,
+  });
+
+  factory OrderItemModel.fromJson(Map<String, dynamic> json) => _\$OrderItemModelFromJson(json);
+  Map<String, dynamic> toJson() => _\$OrderItemModelToJson(this);
+
+  @override
+  List<Object?> get props => [id];
 }
