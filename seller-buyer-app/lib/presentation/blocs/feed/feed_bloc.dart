@@ -1,139 +1,67 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:injectable/injectable.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../data/models/product/product_model.dart';
 
-// ── Events ────────────────────────────────────────────────────────────────────
-abstract class FeedEvent extends Equatable {
-  @override List<Object?> get props => [];
-}
-class FeedLoad       extends FeedEvent {
-  final String mode; // discover | following
-  FeedLoad({this.mode = 'discover'});
-  @override List<Object?> get props => [mode];
-}
-class FeedLoadMore   extends FeedEvent {}
-class FeedRefresh    extends FeedEvent {}
-class FeedToggleMode extends FeedEvent {}
-class FeedSetCategory extends FeedEvent {
-  final String? category;
-  FeedSetCategory(this.category);
-  @override List<Object?> get props => [category];
-}
+part 'feed_event.dart';
+part 'feed_state.dart';
 
-// ── State ─────────────────────────────────────────────────────────────────────
-class FeedState extends Equatable {
-  final List<ProductModel> products;
-  final String mode;         // discover | following
-  final String? category;
-  final int  currentPage;
-  final bool hasMore;
-  final bool isLoading;
-  final bool isLoadingMore;
-  final bool isRefreshing;
-  final String? error;
-
-  const FeedState({
-    this.products    = const [],
-    this.mode        = 'discover',
-    this.category,
-    this.currentPage = 1,
-    this.hasMore     = true,
-    this.isLoading   = false,
-    this.isLoadingMore = false,
-    this.isRefreshing  = false,
-    this.error,
-  });
-
-  FeedState copyWith({
-    List<ProductModel>? products,
-    String? mode, String? category,
-    int? currentPage, bool? hasMore,
-    bool? isLoading, bool? isLoadingMore, bool? isRefreshing,
-    String? error, bool clearError = false, bool clearCategory = false,
-  }) => FeedState(
-    products:      products     ?? this.products,
-    mode:          mode         ?? this.mode,
-    category:      clearCategory ? null : (category ?? this.category),
-    currentPage:   currentPage  ?? this.currentPage,
-    hasMore:       hasMore      ?? this.hasMore,
-    isLoading:     isLoading    ?? this.isLoading,
-    isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-    isRefreshing:  isRefreshing  ?? this.isRefreshing,
-    error:         clearError ? null : (error ?? this.error),
-  );
-
-  @override
-  List<Object?> get props => [products.length, mode, category, currentPage, hasMore, isLoading, isLoadingMore, isRefreshing, error];
-}
-
-// ── Bloc ──────────────────────────────────────────────────────────────────────
-@injectable
 class FeedBloc extends Bloc<FeedEvent, FeedState> {
   final ApiClient _api;
 
-  FeedBloc(this._api) : super(const FeedState()) {
-    on<FeedLoad>(_onLoad);
-    on<FeedLoadMore>(_onLoadMore);
-    on<FeedRefresh>(_onRefresh);
-    on<FeedToggleMode>(_onToggle);
-    on<FeedSetCategory>(_onCategory);
+  FeedBloc(this._api) : super(FeedInitial()) {
+    on<FeedLoadEvent>(_onLoad);
+    on<FeedRefreshEvent>(_onRefresh);
+    on<FeedLoadMoreEvent>(_onLoadMore);
+    on<FeedChangeModeEvent>(_onChangeMode);
+    on<FeedChangeCategoryEvent>(_onChangeCategory);
   }
 
-  Future<void> _onLoad(FeedLoad e, Emitter<FeedState> emit) async {
-    emit(state.copyWith(isLoading: true, mode: e.mode, currentPage: 1, clearError: true));
+  String _mode     = 'discover';
+  String? _catId;
+  int _page        = 1;
+  bool _hasMore    = true;
+
+  Future<void> _onLoad(FeedLoadEvent e, Emitter<FeedState> emit) async {
+    emit(FeedLoading());
+    _page = 1; _hasMore = true;
     try {
-      final res = await _api.getFeed(mode: e.mode, page: 1, category: state.category);
-      emit(state.copyWith(
-        products: res.items, currentPage: 1,
-        hasMore: res.items.length < res.total,
-        isLoading: false,
-      ));
+      final res = await _api.getFeed(mode: _mode, page: 1, categoryId: _catId);
+      _hasMore = res.hasMore;
+      emit(FeedLoaded(products: res.items, hasMore: _hasMore, mode: _mode));
     } catch (err) {
-      emit(state.copyWith(isLoading: false, error: err.toString()));
+      emit(FeedError(message: err.toString()));
     }
   }
 
-  Future<void> _onLoadMore(FeedLoadMore e, Emitter<FeedState> emit) async {
-    if (!state.hasMore || state.isLoadingMore) return;
-    emit(state.copyWith(isLoadingMore: true));
+  Future<void> _onRefresh(FeedRefreshEvent e, Emitter<FeedState> emit) async {
+    _page = 1;
     try {
-      final next = state.currentPage + 1;
-      final res  = await _api.getFeed(mode: state.mode, page: next, category: state.category);
-      emit(state.copyWith(
-        products: [...state.products, ...res.items],
-        currentPage: next,
-        hasMore: state.products.length + res.items.length < res.total,
-        isLoadingMore: false,
-      ));
-    } catch (_) {
-      emit(state.copyWith(isLoadingMore: false));
-    }
+      final res = await _api.getFeed(mode: _mode, page: 1, categoryId: _catId);
+      _hasMore = res.hasMore;
+      emit(FeedLoaded(products: res.items, hasMore: _hasMore, mode: _mode));
+    } catch (_) {}
   }
 
-  Future<void> _onRefresh(FeedRefresh e, Emitter<FeedState> emit) async {
-    emit(state.copyWith(isRefreshing: true));
+  Future<void> _onLoadMore(FeedLoadMoreEvent e, Emitter<FeedState> emit) async {
+    if (!_hasMore || state is! FeedLoaded) return;
+    final current = (state as FeedLoaded).products;
+    _page++;
     try {
-      final res = await _api.getFeed(mode: state.mode, page: 1, category: state.category);
-      emit(state.copyWith(
-        products: res.items, currentPage: 1,
-        hasMore: res.items.length < res.total,
-        isRefreshing: false, clearError: true,
-      ));
-    } catch (_) {
-      emit(state.copyWith(isRefreshing: false));
-    }
+      final res = await _api.getFeed(mode: _mode, page: _page, categoryId: _catId);
+      _hasMore = res.hasMore;
+      emit(FeedLoaded(products: [...current, ...res.items], hasMore: _hasMore, mode: _mode));
+    } catch (_) { _page--; }
   }
 
-  void _onToggle(FeedToggleMode e, Emitter<FeedState> emit) {
-    final next = state.mode == 'discover' ? 'following' : 'discover';
-    add(FeedLoad(mode: next));
+  Future<void> _onChangeMode(FeedChangeModeEvent e, Emitter<FeedState> emit) async {
+    _mode = e.mode; _page = 1;
+    add(FeedLoadEvent());
   }
 
-  void _onCategory(FeedSetCategory e, Emitter<FeedState> emit) {
-    emit(state.copyWith(category: e.category, clearCategory: e.category == null));
-    add(FeedLoad(mode: state.mode));
+  Future<void> _onChangeCategory(FeedChangeCategoryEvent e, Emitter<FeedState> emit) async {
+    _catId = e.categoryId; _page = 1;
+    add(FeedLoadEvent());
   }
 }

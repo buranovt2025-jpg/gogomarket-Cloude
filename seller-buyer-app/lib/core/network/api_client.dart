@@ -1,132 +1,146 @@
 import 'package:dio/dio.dart';
-import 'package:injectable/injectable.dart';
-import 'package:retrofit/retrofit.dart';
 
-import '../constants/app_constants.dart';
 import '../../data/models/user/user_model.dart';
 import '../../data/models/product/product_model.dart';
-import '../../data/models/order/order_model.dart';
-import '../../data/models/seller/seller_model.dart';
-import '../../data/models/chat/chat_model.dart';
-import '../../data/models/chat/message_model.dart';
 import '../../data/models/paginated_response.dart';
 
-part 'api_client.g.dart';
+class ApiClient {
+  final Dio _dio;
+  ApiClient(this._dio);
 
-@singleton
-@RestApi(baseUrl: AppConstants.baseUrl)
-abstract class ApiClient {
-  @factoryMethod
-  factory ApiClient(Dio dio) = _ApiClient;
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  Future<void> sendOtp(String phone) async {
+    await _dio.post('/auth/send-otp', data: {'phone': phone});
+  }
 
-  // Auth
-  @POST('/auth/send-otp')
-  Future<void> sendOtp(@Body() Map<String, dynamic> body);
+  Future<Map<String, dynamic>> verifyOtp({
+    required String phone, required String code,
+    String? role, String? name,
+  }) async {
+    final res = await _dio.post('/auth/verify-otp', data: {
+      'phone': phone, 'code': code,
+      if (role != null) 'role': role,
+      if (name != null) 'name': name,
+    });
+    return Map<String, dynamic>.from(res.data);
+  }
 
-  @POST('/auth/verify-otp')
-  Future<Map<String, dynamic>> verifyOtp(@Body() Map<String, dynamic> body);
+  Future<Map<String, dynamic>> refreshToken(String refreshToken) async {
+    final res = await _dio.post('/auth/refresh', data: {'refreshToken': refreshToken});
+    return Map<String, dynamic>.from(res.data);
+  }
 
-  @POST('/auth/refresh')
-  Future<Map<String, dynamic>> refreshToken(@Body() Map<String, dynamic> body);
+  Future<UserModel> getMe() async {
+    final res = await _dio.get('/auth/me');
+    return UserModel.fromJson(Map<String, dynamic>.from(res.data));
+  }
 
-  @GET('/auth/me')
-  Future<UserModel> getMe();
-
-  // Onboarding
-  @PATCH('/users/me')
-  Future<UserModel> updateProfile(@Body() Map<String, dynamic> body);
-
-  // Seller registration
-  @POST('/sellers/register')
-  Future<Map<String, dynamic>> registerSeller(@Body() Map<String, dynamic> body);
-
-  @GET('/sellers/:id')
-  Future<SellerModel> getSeller(@Path('id') String id);
-
-  // Feed & Products
-  @GET('/feed')
+  // ── Feed ──────────────────────────────────────────────────────────────────
   Future<PaginatedResponse<ProductModel>> getFeed({
-    @Query('mode')   String mode  = 'discover',
-    @Query('page')   int page     = 1,
-    @Query('limit')  int limit    = 20,
-    @Query('cat')    String? category,
-  });
+    String mode = 'discover', int page = 1, int limit = 20, String? categoryId,
+  }) async {
+    final res = await _dio.get('/feed', queryParameters: {
+      'mode': mode, 'page': page, 'limit': limit,
+      if (categoryId != null) 'cat': categoryId,
+    });
+    final data = Map<String, dynamic>.from(res.data);
+    return PaginatedResponse<ProductModel>(
+      items: (data['items'] as List).map((e) => ProductModel.fromJson(Map<String, dynamic>.from(e))).toList(),
+      total: data['total'] as int,
+      page:  data['page']  as int,
+      limit: data['limit'] as int,
+    );
+  }
 
-  @GET('/products')
+  // ── Products ──────────────────────────────────────────────────────────────
+  Future<ProductModel> getProduct(String id) async {
+    final res = await _dio.get('/products/$id');
+    return ProductModel.fromJson(Map<String, dynamic>.from(res.data));
+  }
+
   Future<PaginatedResponse<ProductModel>> getProducts({
-    @Query('q')      String? query,
-    @Query('cat')    String? category,
-    @Query('page')   int page  = 1,
-    @Query('limit')  int limit = 20,
-    @Query('sort')   String sort = 'popular',
-  });
+    String? sellerId, String? categoryId, int page = 1, int limit = 20,
+  }) async {
+    final res = await _dio.get('/products', queryParameters: {
+      'page': page, 'limit': limit,
+      if (sellerId != null)    'sellerId': sellerId,
+      if (categoryId != null)  'categoryId': categoryId,
+    });
+    final data = Map<String, dynamic>.from(res.data);
+    return PaginatedResponse<ProductModel>(
+      items: (data['items'] as List).map((e) => ProductModel.fromJson(Map<String, dynamic>.from(e))).toList(),
+      total: data['total'] as int,
+      page:  data['page']  as int,
+      limit: data['limit'] as int,
+    );
+  }
 
-  @GET('/products/:id')
-  Future<ProductModel> getProduct(@Path('id') String id);
+  // ── Orders ────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> createOrder(Map<String, dynamic> body) async {
+    final res = await _dio.post('/orders', data: body);
+    return Map<String, dynamic>.from(res.data);
+  }
 
-  @POST('/products')
-  Future<ProductModel> createProduct(@Body() Map<String, dynamic> body);
+  Future<List<dynamic>> getOrders({String? status}) async {
+    final res = await _dio.get('/orders', queryParameters: {
+      if (status != null) 'status': status,
+    });
+    return res.data['items'] as List;
+  }
 
-  @PATCH('/products/:id')
-  Future<ProductModel> updateProduct(@Path('id') String id, @Body() Map<String, dynamic> body);
+  Future<Map<String, dynamic>> getOrder(String id) async {
+    final res = await _dio.get('/orders/$id');
+    return Map<String, dynamic>.from(res.data);
+  }
 
-  @DELETE('/products/:id')
-  Future<void> deleteProduct(@Path('id') String id);
+  // ── Chats ─────────────────────────────────────────────────────────────────
+  Future<List<dynamic>> getChats() async {
+    final res = await _dio.get('/chats');
+    return res.data as List;
+  }
 
-  // Orders
-  @GET('/orders')
-  Future<List<OrderModel>> getOrders({@Query('role') String role = 'buyer'});
+  Future<Map<String, dynamic>> createChat(String sellerId) async {
+    final res = await _dio.post('/chats', data: {'sellerId': sellerId});
+    return Map<String, dynamic>.from(res.data);
+  }
 
-  @GET('/orders/:id')
-  Future<OrderModel> getOrder(@Path('id') String id);
+  Future<List<dynamic>> getMessages(String chatId) async {
+    final res = await _dio.get('/chats/$chatId/messages');
+    return res.data as List;
+  }
 
-  @POST('/orders')
-  Future<OrderModel> createOrder(@Body() Map<String, dynamic> body);
+  Future<Map<String, dynamic>> sendMessage(String chatId, String content, {String type = 'text'}) async {
+    final res = await _dio.post('/chats/$chatId/messages', data: {'content': content, 'type': type});
+    return Map<String, dynamic>.from(res.data);
+  }
 
-  @PATCH('/orders/:id/status')
-  Future<OrderModel> updateOrderStatus(@Path('id') String id, @Body() Map<String, dynamic> body);
+  // ── Sellers ───────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> getSeller(String id) async {
+    final res = await _dio.get('/sellers/$id');
+    return Map<String, dynamic>.from(res.data);
+  }
 
-  // Cart → Order
-  @POST('/orders/from-cart')
-  Future<OrderModel> checkoutCart(@Body() Map<String, dynamic> body);
+  Future<Map<String, dynamic>> registerSeller(Map<String, dynamic> data) async {
+    final res = await _dio.post('/sellers', data: data);
+    return Map<String, dynamic>.from(res.data);
+  }
 
-  // Chats
-  @GET('/chats')
-  Future<List<ChatModel>> getChats();
+  // ── Notifications ─────────────────────────────────────────────────────────
+  Future<List<dynamic>> getNotifications() async {
+    final res = await _dio.get('/notifications');
+    return res.data as List;
+  }
 
-  @GET('/chats/:id/messages')
-  Future<List<MessageModel>> getMessages(@Path('id') String chatId, {
-    @Query('before') String? before,
-    @Query('limit')  int limit = 30,
-  });
+  Future<void> markNotificationRead(String id) async {
+    await _dio.patch('/notifications/$id/read');
+  }
 
-  @POST('/chats')
-  Future<ChatModel> createChat(@Body() Map<String, dynamic> body);
-
-  @POST('/chats/:id/messages')
-  Future<MessageModel> sendMessage(@Path('id') String chatId, @Body() Map<String, dynamic> body);
-
-  // Notifications
-  @GET('/notifications')
-  Future<List<Map<String, dynamic>>> getNotifications();
-
-  @PATCH('/notifications/read-all')
-  Future<void> markAllRead();
-
-  // Seller dashboard
-  @GET('/sellers/me/analytics')
-  Future<Map<String, dynamic>> getAnalytics({@Query('period') String period = '7d'});
-
-  @GET('/sellers/me/orders')
-  Future<List<OrderModel>> getSellerOrders({@Query('status') String? status});
-
-  // Admin
-  @GET('/admin/dashboard')
-  Future<Map<String, dynamic>> getDashboard();
-
-  @GET('/admin/sellers/pending')
-  Future<List<Map<String, dynamic>>> getPendingSellers();
-
-  @POST('/admin/sellers/:id/verify')
-  Future<void> verifySeller(@Path('id') String id, @Body() Map<String, dynamic> body);
+  // ── Upload ────────────────────────────────────────────────────────────────
+  Future<String> uploadImage(String filePath) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final res = await _dio.post('/upload/image', data: formData);
+    return res.data['url'] as String;
+  }
 }

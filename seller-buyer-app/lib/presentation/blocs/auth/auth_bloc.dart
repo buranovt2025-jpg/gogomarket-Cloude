@@ -1,84 +1,90 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:injectable/injectable.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../data/models/user/user_model.dart';
 
-// ── Events ────────────────────────────────────────────────────────────────────
-abstract class AuthEvent extends Equatable {
-  @override List<Object?> get props => [];
-}
-class AuthCheckEvent  extends AuthEvent {}
-class AuthLoginEvent  extends AuthEvent {
-  final String phone, code;
-  AuthLoginEvent({required this.phone, required this.code});
-  @override List<Object?> get props => [phone, code];
-}
-class AuthLogoutEvent extends AuthEvent {}
+part 'auth_event.dart';
+part 'auth_state.dart';
 
-// ── States ────────────────────────────────────────────────────────────────────
-abstract class AuthState extends Equatable {
-  @override List<Object?> get props => [];
-}
-class AuthInitial         extends AuthState {}
-class AuthLoading         extends AuthState {}
-class AuthAuthenticated   extends AuthState {
-  final UserModel user;
-  AuthAuthenticated(this.user);
-  @override List<Object?> get props => [user];
-}
-class AuthUnauthenticated extends AuthState {}
-class AuthError extends AuthState {
-  final String message;
-  AuthError(this.message);
-  @override List<Object?> get props => [message];
-}
-
-// ── Bloc ──────────────────────────────────────────────────────────────────────
-@injectable
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ApiClient _api;
 
   AuthBloc(this._api) : super(AuthInitial()) {
     on<AuthCheckEvent>(_onCheck);
-    on<AuthLoginEvent>(_onLogin);
+    on<AuthSendOtpEvent>(_onSendOtp);
+    on<AuthVerifyOtpEvent>(_onVerifyOtp);
     on<AuthLogoutEvent>(_onLogout);
+    on<AuthUpdateUserEvent>(_onUpdateUser);
   }
 
   Future<void> _onCheck(AuthCheckEvent e, Emitter<AuthState> emit) async {
-    emit(AuthLoading());
+    final box   = Hive.box(AppConstants.tokenBox);
+    final token = box.get(AppConstants.accessTokenKey);
+    if (token == null) { emit(AuthUnauthenticated()); return; }
     try {
-      final box = Hive.box(AppConstants.tokenBox);
-      if (box.get(AppConstants.accessTokenKey) == null) {
-        return emit(AuthUnauthenticated());
-      }
       final user = await _api.getMe();
-      emit(AuthAuthenticated(user));
+      emit(AuthAuthenticated(user: user));
     } catch (_) {
+      await box.deleteAll([AppConstants.accessTokenKey, AppConstants.refreshTokenKey]);
       emit(AuthUnauthenticated());
     }
   }
 
-  Future<void> _onLogin(AuthLoginEvent e, Emitter<AuthState> emit) async {
-    emit(AuthLoading());
+  Future<void> _onSendOtp(AuthSendOtpEvent e, Emitter<AuthState> emit) async {
+    emit(AuthOtpSending());
     try {
-      final res  = await _api.verifyOtp({'phone': e.phone, 'code': e.code});
-      final box  = Hive.box(AppConstants.tokenBox);
+      await _api.sendOtp(e.phone);
+      emit(AuthOtpSent(phone: e.phone));
+    } catch (err) {
+      emit(AuthError(message: _parseError(err)));
+    }
+  }
+
+  Future<void> _onVerifyOtp(AuthVerifyOtpEvent e, Emitter<AuthState> emit) async {
+    emit(AuthVerifying());
+    try {
+      final res = await _api.verifyOtp(
+        phone: e.phone, code: e.code,
+        role: e.role, name: e.name,
+      );
+      final box = Hive.box(AppConstants.tokenBox);
       await box.put(AppConstants.accessTokenKey,  res['accessToken']);
       await box.put(AppConstants.refreshTokenKey, res['refreshToken']);
-      final user = UserModel.fromJson(res['user'] as Map<String, dynamic>);
-      emit(AuthAuthenticated(user));
+
+      final userBox = Hive.box(AppConstants.userBox);
+      await userBox.put(AppConstants.userKey, res['user']);
+
+      final user = UserModel.fromJson(Map<String, dynamic>.from(res['user']));
+      emit(AuthAuthenticated(user: user));
     } catch (err) {
-      emit(AuthError(err.toString()));
+      emit(AuthError(message: _parseError(err)));
     }
   }
 
   Future<void> _onLogout(AuthLogoutEvent e, Emitter<AuthState> emit) async {
-    final box = Hive.box(AppConstants.tokenBox);
-    await box.deleteAll([AppConstants.accessTokenKey, AppConstants.refreshTokenKey]);
+    final tokenBox = Hive.box(AppConstants.tokenBox);
+    final userBox  = Hive.box(AppConstants.userBox);
+    await tokenBox.clear();
+    await userBox.clear();
     emit(AuthUnauthenticated());
+  }
+
+  void _onUpdateUser(AuthUpdateUserEvent e, Emitter<AuthState> emit) {
+    if (state is AuthAuthenticated) {
+      emit(AuthAuthenticated(user: e.user));
+    }
+  }
+
+  String _parseError(dynamic err) {
+    try {
+      final msg = err.toString();
+      if (msg.contains('Invalid or expired OTP')) return 'Неверный код';
+      if (msg.contains('Too many')) return 'Слишком много попыток, подождите';
+      if (msg.contains('SocketException')) return 'Нет подключения к интернету';
+      return 'Ошибка. Попробуйте ещё раз';
+    } catch (_) { return 'Неизвестная ошибка'; }
   }
 }
