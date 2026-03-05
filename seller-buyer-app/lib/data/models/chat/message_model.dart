@@ -1,36 +1,29 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/equatable.dart';
-part 'message_model.g.dart';
 
-@JsonSerializable()
 class MessageModel extends Equatable {
   final String   id;
   final String   chatId;
   final String   senderId;
-  final String   type;      // text | image | audio | offer
+  final String   type;
   final String?  content;
   final String?  mediaUrl;
-  final String?  offerProductId;
   final DateTime createdAt;
   final DateTime? readAt;
 
   const MessageModel({
-    required this.id,
-    required this.chatId,
-    required this.senderId,
-    required this.type,
-    this.content,
-    this.mediaUrl,
-    this.offerProductId,
-    required this.createdAt,
-    this.readAt,
+    required this.id, required this.chatId, required this.senderId,
+    required this.type, this.content, this.mediaUrl,
+    required this.createdAt, this.readAt,
   });
 
   bool get isRead => readAt != null;
 
-  factory MessageModel.fromJson(Map<String, dynamic> json) => _\$MessageModelFromJson(json);
-  Map<String, dynamic> toJson() => _\$MessageModelToJson(this);
+  factory MessageModel.fromJson(Map<String, dynamic> j) => MessageModel(
+    id: j['id'], chatId: j['chatId'], senderId: j['senderId'],
+    type: j['type'] ?? 'text', content: j['content'], mediaUrl: j['mediaUrl'],
+    createdAt: DateTime.tryParse(j['createdAt'] ?? '') ?? DateTime.now(),
+    readAt: j['readAt'] != null ? DateTime.tryParse(j['readAt']) : null,
+  );
 
-  @override
-  List<Object?> get props => [id];
+  @override List<Object?> get props => [id];
 }

@@ -1,16 +1,13 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/equatable.dart';
-part 'user_model.g.dart';
 
-@JsonSerializable()
 class UserModel extends Equatable {
-  final String  id;
-  final String  phone;
+  final String id;
+  final String phone;
   final String? name;
   final String? avatarUrl;
-  final String  role;       // buyer | seller | courier | admin
-  final bool    isVerified;
-  final String? sellerPlan; // null | start | business | store
+  final String role;
+  final bool isVerified;
+  final DateTime createdAt;
 
   const UserModel({
     required this.id,
@@ -19,18 +16,29 @@ class UserModel extends Equatable {
     this.avatarUrl,
     required this.role,
     required this.isVerified,
-    this.sellerPlan,
+    required this.createdAt,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
-  Map<String, dynamic> toJson() => _$UserModelToJson(this);
+  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
+    id:         json['id'] as String,
+    phone:      json['phone'] as String,
+    name:       json['name'] as String?,
+    avatarUrl:  json['avatarUrl'] as String?,
+    role:       json['role'] as String? ?? 'buyer',
+    isVerified: json['isVerified'] as bool? ?? false,
+    createdAt:  DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+  );
 
-  bool get isBuyer   => role == 'buyer';
-  bool get isSeller  => role == 'seller';
-  bool get isCourier => role == 'courier';
-  bool get isAdmin   => role == 'admin' || role == 'superadmin';
-  bool get isPro     => sellerPlan != null;
+  Map<String, dynamic> toJson() => {
+    'id': id, 'phone': phone, 'name': name,
+    'avatarUrl': avatarUrl, 'role': role,
+    'isVerified': isVerified, 'createdAt': createdAt.toIso8601String(),
+  };
+
+  bool get isSeller => role == 'seller';
+  bool get isBuyer  => role == 'buyer';
+  bool get isAdmin  => role == 'admin' || role == 'superadmin';
 
   @override
-  List<Object?> get props => [id, role, sellerPlan];
+  List<Object?> get props => [id, role, isVerified];
 }

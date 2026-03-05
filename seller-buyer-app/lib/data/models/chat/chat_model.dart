@@ -1,8 +1,5 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/equatable.dart';
-part 'chat_model.g.dart';
 
-@JsonSerializable()
 class ChatModel extends Equatable {
   final String   id;
   final String   buyerId;
@@ -13,18 +10,18 @@ class ChatModel extends Equatable {
   final DateTime createdAt;
 
   const ChatModel({
-    required this.id,
-    required this.buyerId,
-    required this.sellerId,
-    this.lastMessage,
-    this.lastMessageAt,
-    required this.unreadCount,
-    required this.createdAt,
+    required this.id, required this.buyerId, required this.sellerId,
+    this.lastMessage, this.lastMessageAt,
+    required this.unreadCount, required this.createdAt,
   });
 
-  factory ChatModel.fromJson(Map<String, dynamic> json) => _\$ChatModelFromJson(json);
-  Map<String, dynamic> toJson() => _\$ChatModelToJson(this);
+  factory ChatModel.fromJson(Map<String, dynamic> j) => ChatModel(
+    id: j['id'], buyerId: j['buyerId'], sellerId: j['sellerId'],
+    lastMessage: j['lastMessage'],
+    lastMessageAt: j['lastMessageAt'] != null ? DateTime.tryParse(j['lastMessageAt']) : null,
+    unreadCount: j['buyerUnread'] ?? 0,
+    createdAt: DateTime.tryParse(j['createdAt'] ?? '') ?? DateTime.now(),
+  );
 
-  @override
-  List<Object?> get props => [id];
+  @override List<Object?> get props => [id];
 }
