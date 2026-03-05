@@ -49,12 +49,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: GogoMarket-${{ github.sha }}
-          path: seller-buyer-app/build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            seller-buyer-app/build/app/outputs/flutter-apk/app-release.apk
+            seller-buyer-app/build/app/outputs/apk/release/app-release.apk
+          if-no-files-found: warn
           retention-days: 30
 
-      - name: Show APK size
-        run: |
-          APK=seller-buyer-app/build/app/outputs/flutter-apk/app-release.apk
-          if [ -f "$APK" ]; then
-            echo "✅ APK built: $(du -sh $APK | cut -f1)"
-          fi
+      - name: Find APK
+        run: find seller-buyer-app/build -name "*.apk" 2>/dev/null | head -5
