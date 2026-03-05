@@ -10,7 +10,7 @@ const router = Router();
 
 // GET /v1/sellers/:id — public storefront
 router.get('/:id', async (req, res) => {
-  const [seller] = await db.select().from(sellers).where(eq(sellers.id, req.params.id)).limit(1);
+  const [seller] = await db.select().from(sellers).where(eq(sellers.id, String(req.params.id))).limit(1);
   if (!seller) throw new AppError(404, 'Seller not found');
 
   const sellerProducts = await db.select().from(products)

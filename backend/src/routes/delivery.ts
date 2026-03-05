@@ -18,7 +18,7 @@ router.get('/services', (_req, res) => {
 router.get('/track/:trackingId', authenticate, async (req, res) => {
   // TODO: integrate Express24/Yandex tracking API
   res.json({
-    trackingId: req.params.trackingId,
+    trackingId: String(req.params.trackingId),
     status: 'in_transit',
     eta: '15:30–17:00',
     courier: { name: 'Курьер', lat: 41.3111, lng: 69.2797 },

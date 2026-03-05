@@ -51,7 +51,7 @@ router.get('/', async (req, res) => {
 // GET /v1/products/:id — public
 router.get('/:id', async (req, res) => {
   const [product] = await db.select().from(products)
-    .where(and(eq(products.id, req.params.id), isNull(products.deletedAt)))
+    .where(and(eq(products.id, String(req.params.id)), isNull(products.deletedAt)))
     .limit(1);
   if (!product) throw new AppError(404, 'Product not found');
 
@@ -100,7 +100,7 @@ router.post('/', authenticate, requireSeller, async (req, res) => {
 // PATCH /v1/products/:id — owner only
 router.patch('/:id', authenticate, requireSeller, async (req, res) => {
   const [existing] = await db.select().from(products)
-    .where(and(eq(products.id, req.params.id), isNull(products.deletedAt))).limit(1);
+    .where(and(eq(products.id, String(req.params.id)), isNull(products.deletedAt))).limit(1);
 
   if (!existing) throw new AppError(404, 'Product not found');
 
@@ -122,7 +122,7 @@ router.patch('/:id', authenticate, requireSeller, async (req, res) => {
 
   const [updated] = await db.update(products)
     .set({ ...updates, updatedAt: new Date() })
-    .where(eq(products.id, req.params.id))
+    .where(eq(products.id, String(req.params.id)))
     .returning();
 
   res.json(updated);
@@ -132,7 +132,7 @@ router.patch('/:id', authenticate, requireSeller, async (req, res) => {
 router.delete('/:id', authenticate, requireSeller, async (req, res) => {
   await db.update(products)
     .set({ deletedAt: new Date(), status: 'deleted' })
-    .where(eq(products.id, req.params.id));
+    .where(eq(products.id, String(req.params.id)));
   res.json({ message: 'Product deleted' });
 });
 

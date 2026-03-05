@@ -44,7 +44,7 @@ router.post('/sellers/:id/verify', async (req, res) => {
 
   const [seller] = await db.update(sellers)
     .set({ isVerified: approved, isRejected: !approved, updatedAt: new Date() })
-    .where(eq(sellers.id, req.params.id))
+    .where(eq(sellers.id, String(req.params.id)))
     .returning();
 
   if (!seller) throw new AppError(404, 'Seller not found');
@@ -75,7 +75,7 @@ router.patch('/products/:id/moderate', async (req, res) => {
   const { action } = z.object({ action: z.enum(['approve', 'reject']) }).parse(req.body);
   const [product] = await db.update(products)
     .set({ status: action === 'approve' ? 'active' : 'rejected', updatedAt: new Date() })
-    .where(eq(products.id, req.params.id))
+    .where(eq(products.id, String(req.params.id)))
     .returning();
   res.json(product);
 });

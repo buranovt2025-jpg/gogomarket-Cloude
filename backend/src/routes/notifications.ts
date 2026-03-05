@@ -19,7 +19,7 @@ router.get('/', authenticate, async (req, res) => {
 router.patch('/:id/read', authenticate, async (req, res) => {
   await db.update(notifications)
     .set({ isRead: true, readAt: new Date() })
-    .where(and(eq(notifications.id, req.params.id), eq(notifications.userId, req.user!.userId)));
+    .where(and(eq(notifications.id, String(req.params.id)), eq(notifications.userId, req.user!.userId)));
   res.json({ message: 'Marked as read' });
 });
 

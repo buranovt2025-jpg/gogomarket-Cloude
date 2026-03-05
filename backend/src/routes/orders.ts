@@ -102,7 +102,7 @@ router.get('/', authenticate, async (req, res) => {
 
 // GET /v1/orders/:id
 router.get('/:id', authenticate, async (req, res) => {
-  const [order] = await db.select().from(orders).where(eq(orders.id, req.params.id)).limit(1);
+  const [order] = await db.select().from(orders).where(eq(orders.id, String(req.params.id))).limit(1);
   if (!order) throw new AppError(404, 'Order not found');
 
   const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
@@ -112,7 +112,7 @@ router.get('/:id', authenticate, async (req, res) => {
 // PATCH /v1/orders/:id/status
 router.patch('/:id/status', authenticate, async (req, res) => {
   const { status } = z.object({ status: z.string() }).parse(req.body);
-  const [order] = await db.select().from(orders).where(eq(orders.id, req.params.id)).limit(1);
+  const [order] = await db.select().from(orders).where(eq(orders.id, String(req.params.id))).limit(1);
   if (!order) throw new AppError(404, 'Order not found');
 
   const allowed = ORDER_STATUS_TRANSITIONS[order.status] || [];
@@ -126,7 +126,7 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       updatedAt: new Date(),
       completedAt: status === 'done' ? new Date() : undefined,
     })
-    .where(eq(orders.id, req.params.id))
+    .where(eq(orders.id, String(req.params.id)))
     .returning();
 
   // Push notification to buyer
@@ -144,7 +144,7 @@ router.patch('/:id/status', authenticate, async (req, res) => {
 // POST /v1/orders/:id/dispute
 router.post('/:id/dispute', authenticate, async (req, res) => {
   const { reason } = z.object({ reason: z.string().min(10) }).parse(req.body);
-  const [order] = await db.select().from(orders).where(eq(orders.id, req.params.id)).limit(1);
+  const [order] = await db.select().from(orders).where(eq(orders.id, String(req.params.id))).limit(1);
   if (!order) throw new AppError(404, 'Order not found');
 
   await db.update(orders).set({ status: 'dispute', updatedAt: new Date() }).where(eq(orders.id, order.id));
@@ -159,7 +159,7 @@ router.post('/:id/review', authenticate, async (req, res) => {
   }).parse(req.body);
 
   const [order] = await db.select().from(orders)
-    .where(and(eq(orders.id, req.params.id), eq(orders.buyerId, req.user!.userId))).limit(1);
+    .where(and(eq(orders.id, String(req.params.id)), eq(orders.buyerId, req.user!.userId))).limit(1);
   if (!order) throw new AppError(404, 'Order not found');
   if (order.status !== 'done') throw new AppError(422, 'Can only review completed orders');
 
