@@ -37,7 +37,7 @@ router.post('/', authenticate, async (req, res) => {
 
   // Validate products and calculate total
   let totalTiyin = 0;
-  const itemsData = [];
+  const itemsData: { productId: string; variantId?: string; quantity: number; priceTiyin: number; title: string }[] = [];
   let sellerId: string | null = null;
 
   for (const item of body.items) {
@@ -66,7 +66,14 @@ router.post('/', authenticate, async (req, res) => {
   }).returning();
 
   await db.insert(orderItems).values(
-    itemsData.map(i => ({ orderId: order.id, ...i }))
+    itemsData.map(i => ({
+      orderId:    order.id,
+      productId:  i.productId,
+      variantId:  i.variantId,
+      quantity:   i.quantity,
+      priceTiyin: i.priceTiyin,
+      title:      i.title,
+    }))
   );
 
   // TODO: send push to seller
