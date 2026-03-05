@@ -74,3 +74,4 @@ router.get('/me', authenticate, async (req, res) => {
 });
 
 export default router;
+// Routes already exported above
