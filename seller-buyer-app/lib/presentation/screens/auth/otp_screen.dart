@@ -53,7 +53,7 @@ class _OtpScreenState extends State<OtpScreen> {
   Future<void> _resend() async {
     if (!_canResend) return;
     try {
-      await getIt<ApiClient>().sendOtp({'phone': widget.phone});
+      context.read<AuthBloc>().add(AuthSendOtpEvent(widget.phone));
       _startCountdown();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

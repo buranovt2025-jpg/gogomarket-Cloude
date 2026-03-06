@@ -47,7 +47,7 @@ class _PhoneScreenState extends State<PhoneScreen> with SingleTickerProviderStat
 
     setState(() => _loading = true);
     try {
-      await getIt<ApiClient>().sendOtp({'phone': _phone});
+      context.read<AuthBloc>().add(AuthSendOtpEvent(_phone));
       if (mounted) {
         context.push('${Routes.otp}?phone=${Uri.encodeComponent(_phone)}');
       }

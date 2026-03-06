@@ -16,6 +16,7 @@ class ProductModel extends Equatable {
   final bool    isBoosted;
   final int     viewCount;
   final int     saleCount;
+  int get soldCount => saleCount;
   final List<String> photoUrls;
   final List<String> photos; // alias
   final DateTime createdAt;
