@@ -406,8 +406,14 @@ class _CartBtn extends StatelessWidget {
 // ── Stories ───────────────────────────────────────────────────────────────────
 class _Stories extends StatelessWidget {
   final _s = const [
-    {'n':'Aisha','e':'👗'}, {'n':'Nike','e':'👟'}, {'n':'Beauty','e':'💄'},
-    {'n':'Tech','e':'📱'}, {'n':'Home','e':'🏠'}, {'n':'Sport','e':'⚽'},
+    {'n':'Aisha Fashion','e':'👗'},
+    {'n':'Kamola Beauty','e':'💄'},
+    {'n':'TechZone UZ','e':'📱'},
+    {'n':'Sport Life','e':'🏋️'},
+    {'n':'Home Comfort','e':'🕯️'},
+    {'n':'SneakerShop','e':'👟'},
+    {'n':'BeautyUZ','e':'✨'},
+    {'n':'Новинки','e':'🔥'},
   ];
   const _Stories();
   @override Widget build(BuildContext context) => SizedBox(height: 88.h,

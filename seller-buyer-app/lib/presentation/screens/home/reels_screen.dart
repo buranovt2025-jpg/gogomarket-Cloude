@@ -19,11 +19,14 @@ class _Reel {
 }
 
 final _reels = [
-  _Reel(id:'1', productId:'p0', title:'Платье летнее Zara style', seller:'Aisha Fashion', sellerId:'s0', price:18500000, likes:1240, comments:48, color:const Color(0xFF1A1040), emoji:'👗'),
-  _Reel(id:'2', productId:'p1', title:'Кроссовки Nike Air Max', seller:'SneakerShop', sellerId:'s1', price:42000000, likes:890, comments:22, color:const Color(0xFF0D2030), emoji:'👟'),
-  _Reel(id:'3', productId:'p2', title:'Помада матовая Rose', seller:'BeautyUZ', sellerId:'s2', price:8900000, likes:2100, comments:91, color:const Color(0xFF301020), emoji:'💄'),
-  _Reel(id:'4', productId:'p3', title:'iPhone 14 чехол', seller:'TechUZ', sellerId:'s3', price:12000000, likes:445, comments:15, color:const Color(0xFF102030), emoji:'📱'),
-  _Reel(id:'5', productId:'p4', title:'Постельное бельё', seller:'HomeStyle', sellerId:'s4', price:15000000, likes:778, comments:33, color:const Color(0xFF102020), emoji:'🏠'),
+  _Reel(id:'1', productId:'p0', title:'Платье летнее Zara style 🌸', seller:'Aisha Fashion', sellerId:'s1', price:18500000, likes:1240, comments:48, color:const Color(0xFF1A1040), emoji:'👗'),
+  _Reel(id:'2', productId:'p9', title:'Сыворотка меняет кожу за 7 дней ✨', seller:'Kamola Beauty', sellerId:'s2', price:18900000, likes:2100, comments:91, color:const Color(0xFF301020), emoji:'💄'),
+  _Reel(id:'3', productId:'p14', title:'Наушники TWS — обзор 🎧', seller:'TechZone UZ', sellerId:'s3', price:38000000, likes:890, comments:22, color:const Color(0xFF0D2030), emoji:'🎧'),
+  _Reel(id:'4', productId:'p18', title:'Утренняя тренировка 💪', seller:'Sport Life', sellerId:'s4', price:14500000, likes:1560, comments:67, color:const Color(0xFF0D2010), emoji:'🏋️'),
+  _Reel(id:'5', productId:'p22', title:'Атмосфера дома со свечой 🕯️', seller:'Home Comfort', sellerId:'s5', price:8500000, likes:778, comments:33, color:const Color(0xFF201510), emoji:'🕯️'),
+  _Reel(id:'6', productId:'p7', title:'Пальто оверсайз — 5 образов 🧥', seller:'Aisha Fashion', sellerId:'s1', price:68000000, likes:3200, comments:124, color:const Color(0xFF251A10), emoji:'🧥'),
+  _Reel(id:'7', productId:'p11', title:'Макияж за 5 минут 💄', seller:'Kamola Beauty', sellerId:'s2', price:24000000, likes:4500, comments:210, color:const Color(0xFF301525), emoji:'👁️'),
+  _Reel(id:'8', productId:'p15', title:'Смарт-часы GT4 — всё что нужно ⌚', seller:'TechZone UZ', sellerId:'s3', price:52000000, likes:1100, comments:45, color:const Color(0xFF102040), emoji:'⌚'),
 ];
 
 class ReelsScreen extends StatefulWidget {
