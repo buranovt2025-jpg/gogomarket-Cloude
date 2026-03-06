@@ -120,7 +120,7 @@ class _ReelPage extends StatelessWidget {
       ),
 
       // ── Gradient overlays ────────────────────────────────────────────
-      Positioned(fill: const Alignment(0,0),
+      Positioned(left: 0, right: 0, bottom: 0,
         child: DecoratedBox(decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter, end: Alignment.bottomCenter,

@@ -8,7 +8,6 @@ class ProductModel extends Equatable {
   final String? description;
   final int     priceTiyin;
   final int?    oldPriceTiyin;
-  final int?    originalPriceTiyin; // alias
   final int     stock;
   final String  status;
   final double  avgRating;
@@ -16,12 +15,14 @@ class ProductModel extends Equatable {
   final bool    isBoosted;
   final int     viewCount;
   final int     saleCount;
-  int get soldCount => saleCount;
   final List<String> photoUrls;
-  final List<String> photos; // alias
   final DateTime createdAt;
+  // Optional enriched fields
+  final String? sellerName;
+  final String? sellerAvatarUrl;
+  final List<String> variants;
 
-  ProductModel({
+  const ProductModel({
     required this.id,
     required this.sellerId,
     this.categoryId,
@@ -29,7 +30,6 @@ class ProductModel extends Equatable {
     this.description,
     required this.priceTiyin,
     this.oldPriceTiyin,
-    int? originalPriceTiyin,
     required this.stock,
     required this.status,
     required this.avgRating,
@@ -37,12 +37,12 @@ class ProductModel extends Equatable {
     required this.isBoosted,
     required this.viewCount,
     required this.saleCount,
-    List<String>? photoUrls,
-    List<String>? photos,
+    required this.photoUrls,
     required this.createdAt,
-  })  : photoUrls = photoUrls ?? photos ?? [],
-        photos = photoUrls ?? photos ?? [],
-        originalPriceTiyin = originalPriceTiyin ?? oldPriceTiyin;
+    this.sellerName,
+    this.sellerAvatarUrl,
+    this.variants = const [],
+  });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) => ProductModel(
     id:            json['id'] as String,
@@ -61,22 +61,28 @@ class ProductModel extends Equatable {
     saleCount:     (json['saleCount'] as num?)?.toInt() ?? 0,
     photoUrls:     (json['photoUrls'] as List?)?.cast<String>() ?? [],
     createdAt:     DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+    sellerName:    json['sellerName'] as String?,
+    sellerAvatarUrl: json['sellerAvatarUrl'] as String?,
   );
 
   Map<String, dynamic> toJson() => {
-    'id': id, 'sellerId': sellerId, 'categoryId': categoryId,
-    'title': title, 'description': description,
+    'id': id, 'sellerId': sellerId, 'title': title,
     'priceTiyin': priceTiyin, 'oldPriceTiyin': oldPriceTiyin,
-    'stock': stock, 'status': status,
-    'avgRating': avgRating, 'reviewCount': reviewCount,
-    'isBoosted': isBoosted, 'viewCount': viewCount, 'saleCount': saleCount,
-    'photoUrls': photoUrls,
-    'createdAt': createdAt.toIso8601String(),
+    'stock': stock, 'status': status, 'avgRating': avgRating,
+    'reviewCount': reviewCount, 'isBoosted': isBoosted,
+    'photoUrls': photoUrls, 'createdAt': createdAt.toIso8601String(),
   };
+
+  // Aliases
+  int get soldCount => saleCount;
+  int? get originalPriceTiyin => oldPriceTiyin;
+  List<String> get photos => photoUrls;
 
   double get priceUzs => priceTiyin / 100;
   double? get oldPriceUzs => oldPriceTiyin != null ? oldPriceTiyin! / 100 : null;
   bool get hasDiscount => oldPriceTiyin != null && oldPriceTiyin! > priceTiyin;
+  int get discountPercent => hasDiscount
+      ? ((oldPriceTiyin! - priceTiyin) / oldPriceTiyin! * 100).round() : 0;
 
   @override
   List<Object?> get props => [id, priceTiyin, status];
