@@ -27,7 +27,7 @@ class MainShell extends StatelessWidget {
     return Scaffold(
       body: child,
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color ?? AppColors.bgCard,
           border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
         ),

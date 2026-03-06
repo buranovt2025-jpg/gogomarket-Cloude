@@ -123,17 +123,17 @@ class AppTheme {
 
       // Switch
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith((s) =>
-          s.contains(WidgetState.selected) ? _accent : tMuted),
-        trackColor: WidgetStateProperty.resolveWith((s) =>
-          s.contains(WidgetState.selected) ? AppColors.accentBg : brd),
+        thumbColor: MaterialStateProperty.resolveWith((s) =>
+          s.contains(MaterialState.selected) ? _accent : tMuted),
+        trackColor: MaterialStateProperty.resolveWith((s) =>
+          s.contains(MaterialState.selected) ? AppColors.accentBg : brd),
       ),
 
       // Checkbox
       checkboxTheme: CheckboxThemeData(
-        fillColor: WidgetStateProperty.resolveWith((s) =>
-          s.contains(WidgetState.selected) ? _accent : Colors.transparent),
-        checkColor: const WidgetStatePropertyAll(Colors.white),
+        fillColor: MaterialStateProperty.resolveWith((s) =>
+          s.contains(MaterialState.selected) ? _accent : Colors.transparent),
+        checkColor: MaterialStateProperty.all(Colors.white),
         side: const BorderSide(color: brd, width: 1.5),
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4))),
       ),
