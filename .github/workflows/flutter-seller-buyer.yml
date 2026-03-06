@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'seller-buyer-app/**'
+      - '.github/workflows/**'
 
 env:
   TG_BOT_TOKEN: "8786274351:AAHXhlhzvIj8_xPQzE0e6bVBdMUlE-1dxq4"
