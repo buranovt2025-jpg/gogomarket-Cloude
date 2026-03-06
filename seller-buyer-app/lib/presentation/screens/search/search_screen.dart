@@ -25,7 +25,7 @@ class _SearchScreenState extends State<SearchScreen> {
     id: 'sr$i', sellerId: 's$i',
     title: ['Платье миди', 'Платье вечернее', 'Платье повседневное', 'Платье свадебное', 'Платье летнее', 'Платье мини'][i],
     priceTiyin: [18500000, 45000000, 12000000, 120000000, 9800000, 22000000][i],
-    status: 'active', photos: [],
+    status: 'active', photoUrls: [],
     createdAt: DateTime.now(),
     avgRating: 4.6 + i * 0.05,
     soldCount: 50 + i * 30,
@@ -117,7 +117,7 @@ class _Results extends StatelessWidget {
     id: 'sr$i', sellerId: 's$i',
     title: ['Платье миди', 'Платье вечернее', 'Платье повседневное', 'Платье свадебное', 'Платье летнее', 'Платье мини'][i],
     priceTiyin: [18500000, 45000000, 12000000, 120000000, 9800000, 22000000][i],
-    status: 'active', photos: [], createdAt: DateTime.now(),
+    status: 'active', photoUrls: [], createdAt: DateTime.now(),
     avgRating: 4.6, soldCount: 50, reviewCount: 10,
   ));
 

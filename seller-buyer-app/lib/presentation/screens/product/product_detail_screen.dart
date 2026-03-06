@@ -210,9 +210,9 @@ class _Body extends StatelessWidget {
                 SizedBox(height: 8.h),
                 Wrap(spacing: 8.w, runSpacing: 8.h,
                   children: product.variants.map((v) {
-                    final sel = selectedVariant == v.id;
+                    final sel = selectedVariant == v;
                     return GestureDetector(
-                      onTap: () => onVariantSelected(sel ? null : v.id),
+                      onTap: () => onVariantSelected(sel ? null : v),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),

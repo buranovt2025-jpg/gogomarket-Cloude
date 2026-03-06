@@ -27,7 +27,7 @@ class _StorefrontScreenState extends State<StorefrontScreen> with SingleTickerPr
   static final _mockProducts = List.generate(8, (i) => ProductModel(
     id: 'p$i', sellerId: 'seller_0', title: ['Платье летнее', 'Топ базовый', 'Брюки wide leg', 'Блуза шёлк', 'Джинсы mom', 'Юбка миди', 'Пальто oversize', 'Кардиган вязаный'][i],
     priceTiyin: [18500000, 9800000, 24000000, 32000000, 21000000, 14500000, 68000000, 27000000][i],
-    originalPriceTiyin: i % 3 == 0 ? [23000000, 12000000, 30000000, null, 26000000, null, 85000000, null][i] : null,
+    oldPriceTiyin: i % 3 == 0 ? [23000000, 12000000, 30000000, null, 26000000, null, 85000000, null][i] : null,
     status: 'active', photos: [], createdAt: DateTime.now(),
     avgRating: [4.9, 4.7, 4.8, 4.6, 4.9, 4.5, 4.8, 4.7][i],
     reviewCount: [124, 67, 89, 45, 210, 38, 156, 72][i],

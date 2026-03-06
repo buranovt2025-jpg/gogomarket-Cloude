@@ -54,7 +54,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
                 style: TextStyle(color: AppColors.textMuted, fontSize: 9.sp)))),
           ),
           lineBarsData: [LineChartBarData(
-            spots: [180.0, 240, 190, 350, 280, 420, 390].asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+            spots: [180.0, 240, 190, 350, 280, 420, 390].asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList(),
             isCurved: true, color: AppColors.accent, barWidth: 2.5,
             dotData: FlDotData(show: true, getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(radius: 3, color: AppColors.accent, strokeWidth: 1, strokeColor: Colors.white)),
             belowBarData: BarAreaData(show: true, color: AppColors.accent.withOpacity(0.08)),
