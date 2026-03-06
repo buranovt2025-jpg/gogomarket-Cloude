@@ -28,7 +28,7 @@ class _SearchScreenState extends State<SearchScreen> {
     status: 'active', photoUrls: [],
     createdAt: DateTime.now(),
     avgRating: 4.6 + i * 0.05,
-    soldCount: 50 + i * 30,
+    saleCount: 50 + i * 30,
     reviewCount: 10 + i * 8,
   ));
 
@@ -118,7 +118,7 @@ class _Results extends StatelessWidget {
     title: ['Платье миди', 'Платье вечернее', 'Платье повседневное', 'Платье свадебное', 'Платье летнее', 'Платье мини'][i],
     priceTiyin: [18500000, 45000000, 12000000, 120000000, 9800000, 22000000][i],
     status: 'active', photoUrls: [], createdAt: DateTime.now(),
-    avgRating: 4.6, soldCount: 50, reviewCount: 10,
+    avgRating: 4.6, saleCount: 50, reviewCount: 10,
   ));
 
   @override

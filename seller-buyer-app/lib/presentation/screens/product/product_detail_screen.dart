@@ -221,7 +221,7 @@ class _Body extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: sel ? AppColors.accent : AppColors.border),
                         ),
-                        child: Text(v.value, style: TextStyle(
+                        child: Text(v, style: TextStyle(
                           color: sel ? Colors.white : AppColors.textPrimary,
                           fontSize: 13.sp, fontWeight: sel ? FontWeight.w600 : FontWeight.normal,
                         )),
