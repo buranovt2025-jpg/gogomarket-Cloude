@@ -265,7 +265,7 @@ class _ProductCard extends StatelessWidget {
                 builder: (ctx, state) {
                   final inCart = state.items.any((i) => i.product.id == product.id);
                   return GestureDetector(
-                    onTap: () => ctx.read<CartBloc>().add(CartAdd(product)),
+                    onTap: () => ctx.read<CartBloc>().add(CartAdd(CartItem(product: product))),
                     child: Container(
                       width: 30.w, height: 30.w,
                       decoration: BoxDecoration(
