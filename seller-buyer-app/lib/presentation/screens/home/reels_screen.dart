@@ -3,36 +3,42 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:video_player/video_player.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/format.dart';
 import '../../blocs/cart/cart_bloc.dart';
-import '../../../data/models/product/product_model.dart';
 
-// Mock reel data (replaced by API when backend ready)
 class _ReelItem {
-  final String id, videoUrl, productId, productTitle, sellerName, sellerId;
+  final String id, productId, productTitle, sellerName, sellerId;
   final int priceTiyin, likes, comments;
-  final String? thumbnailUrl, sellerAvatarUrl;
+  final Color bgColor;
+  final String emoji;
   const _ReelItem({
-    required this.id, required this.videoUrl, required this.productId,
-    required this.productTitle, required this.sellerName, required this.sellerId,
+    required this.id, required this.productId, required this.productTitle,
+    required this.sellerName, required this.sellerId,
     required this.priceTiyin, required this.likes, required this.comments,
-    this.thumbnailUrl, this.sellerAvatarUrl,
+    required this.bgColor, required this.emoji,
   });
 }
 
-final _mockReels = List.generate(5, (i) => _ReelItem(
-  id: 'reel_$i', videoUrl: '', productId: 'prod_$i',
-  productTitle: ['Платье летнее Zara style', 'Кроссовки Nike Air Max', 'Помада матовая Rose', 'iPhone 14 чехол', 'Постельное бельё'][i],
-  sellerName: ['Aisha Fashion', 'SneakerShop', 'BeautyUZ', 'TechAccessUZ', 'HomeStyle'][i],
-  sellerId: 'seller_$i',
-  priceTiyin: [18500000, 42000000, 8900000, 12000000, 15000000][i],
-  likes: [1240, 890, 2100, 445, 778][i],
-  comments: [48, 22, 91, 15, 33][i],
-));
+final _mockReels = [
+  _ReelItem(id: '1', productId: 'p0', productTitle: 'Платье летнее Zara style', sellerName: 'Aisha Fashion',
+    sellerId: 's0', priceTiyin: 18500000, likes: 1240, comments: 48,
+    bgColor: const Color(0xFF1A1040), emoji: '👗'),
+  _ReelItem(id: '2', productId: 'p1', productTitle: 'Кроссовки Nike Air Max', sellerName: 'SneakerShop',
+    sellerId: 's1', priceTiyin: 42000000, likes: 890, comments: 22,
+    bgColor: const Color(0xFF0D2030), emoji: '👟'),
+  _ReelItem(id: '3', productId: 'p2', productTitle: 'Помада матовая Rose', sellerName: 'BeautyUZ',
+    sellerId: 's2', priceTiyin: 8900000, likes: 2100, comments: 91,
+    bgColor: const Color(0xFF301020), emoji: '💄'),
+  _ReelItem(id: '4', productId: 'p3', productTitle: 'iPhone 14 чехол', sellerName: 'TechUZ',
+    sellerId: 's3', priceTiyin: 12000000, likes: 445, comments: 15,
+    bgColor: const Color(0xFF102030), emoji: '📱'),
+  _ReelItem(id: '5', productId: 'p4', productTitle: 'Постельное бельё premium', sellerName: 'HomeStyle',
+    sellerId: 's4', priceTiyin: 15000000, likes: 778, comments: 33,
+    bgColor: const Color(0xFF102020), emoji: '🏠'),
+];
 
 class ReelsScreen extends StatefulWidget {
   const ReelsScreen({super.key});
@@ -63,12 +69,9 @@ class _ReelsScreenState extends State<ReelsScreen> {
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        backgroundColor: Colors.transparent, elevation: 0,
         title: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          _TabBtn('Все', true),
-          SizedBox(width: 8.w),
-          _TabBtn('Подписки', false),
+          _TabBtn('Все', true), SizedBox(width: 8.w), _TabBtn('Подписки', false),
         ]),
       ),
       body: PageView.builder(
@@ -78,7 +81,6 @@ class _ReelsScreenState extends State<ReelsScreen> {
         onPageChanged: (i) => setState(() => _current = i),
         itemBuilder: (_, i) => _ReelPage(
           reel: _mockReels[i],
-          isActive: i == _current,
           isLiked: _liked.contains(_mockReels[i].id),
           onLike: () => setState(() {
             if (_liked.contains(_mockReels[i].id)) _liked.remove(_mockReels[i].id);
@@ -102,30 +104,46 @@ class _TabBtn extends StatelessWidget {
 
 class _ReelPage extends StatelessWidget {
   final _ReelItem reel;
-  final bool isActive, isLiked;
+  final bool isLiked;
   final VoidCallback onLike;
-  const _ReelPage({required this.reel, required this.isActive, required this.isLiked, required this.onLike});
+  const _ReelPage({required this.reel, required this.isLiked, required this.onLike});
 
   @override
   Widget build(BuildContext context) {
     return Stack(fit: StackFit.expand, children: [
-      // ── Video / placeholder ──────────────────────────────────────────
+
+      // ── Background ──────────────────────────────────────────────────
       Container(
-        color: Colors.black,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter, end: Alignment.bottomCenter,
+            colors: [reel.bgColor, Colors.black],
+          ),
+        ),
         child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('🎬', style: TextStyle(fontSize: 64.sp)),
-          SizedBox(height: 12.h),
-          Text('Видео загружается...', style: TextStyle(color: Colors.white54, fontSize: 13.sp)),
+          Text(reel.emoji, style: TextStyle(fontSize: 100.sp)),
+          SizedBox(height: 16.h),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: Colors.white12,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.play_circle_outline, color: Colors.white54, size: 20.sp),
+              SizedBox(width: 8.w),
+              Text('Видео скоро', style: TextStyle(color: Colors.white54, fontSize: 13.sp)),
+            ]),
+          ),
         ])),
       ),
 
-      // ── Gradient overlays ────────────────────────────────────────────
-      Positioned(left: 0, right: 0, bottom: 0,
+      // ── Bottom gradient ─────────────────────────────────────────────
+      Positioned(left: 0, right: 0, bottom: 0, height: 300.h,
         child: DecoratedBox(decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter, end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
-            stops: const [0.5, 1.0],
+            colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
           ),
         )),
       ),
@@ -133,63 +151,67 @@ class _ReelPage extends StatelessWidget {
       // ── Right actions ────────────────────────────────────────────────
       Positioned(right: 12.w, bottom: 120.h,
         child: Column(children: [
-          // Seller avatar
+          // Avatar
           GestureDetector(
             onTap: () => context.push(Routes.storefront(reel.sellerId)),
-            child: Stack(alignment: Alignment.bottomCenter, children: [
-              Container(width: 44.w, height: 44.w, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.bgCard),
-                child: Center(child: Text(reel.sellerName[0], style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18.sp)))),
-              Positioned(bottom: -6, child: Container(width: 20, height: 20,
+            child: Stack(alignment: Alignment.bottomCenter, clipBehavior: Clip.none, children: [
+              Container(
+                width: 46.w, height: 46.w,
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.bgCard),
+                child: Center(child: Text(reel.sellerName[0],
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18.sp))),
+              ),
+              Positioned(bottom: -8, child: Container(
+                width: 20, height: 20,
                 decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                child: const Icon(Icons.add, color: Colors.white, size: 12))),
+                child: const Icon(Icons.add, color: Colors.white, size: 12),
+              )),
             ]),
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 22.h),
 
-          // Like
-          _ActionIcon(icon: isLiked ? Icons.favorite : Icons.favorite_border,
+          _ActionBtn(icon: isLiked ? Icons.favorite : Icons.favorite_border,
             color: isLiked ? AppColors.red : Colors.white,
-            label: '${reel.likes + (isLiked ? 1 : 0)}', onTap: onLike),
-          SizedBox(height: 16.h),
+            label: _fmt(reel.likes + (isLiked ? 1 : 0)), onTap: onLike),
+          SizedBox(height: 18.h),
 
-          // Comment
-          _ActionIcon(icon: Icons.chat_bubble_outline, label: '${reel.comments}', onTap: () {}),
-          SizedBox(height: 16.h),
+          _ActionBtn(icon: Icons.chat_bubble_outline, label: _fmt(reel.comments), onTap: () {}),
+          SizedBox(height: 18.h),
 
-          // Share
-          _ActionIcon(icon: Icons.share_outlined, label: 'Поделиться', onTap: () {}),
-          SizedBox(height: 16.h),
+          _ActionBtn(icon: Icons.share_outlined, label: 'Поделиться', onTap: () {}),
+          SizedBox(height: 18.h),
 
-          // Cart
-          BlocBuilder<CartBloc, CartState>(
-            builder: (ctx, state) {
-              // Build a mock product just for cart operations
-              final inCart = state.items.any((i) => i.product.id == reel.productId);
-              return _ActionIcon(
-                icon: inCart ? Icons.shopping_bag : Icons.shopping_bag_outlined,
-                color: inCart ? AppColors.accent : Colors.white,
-                label: 'В корзину',
-                onTap: () {},
-              );
-            },
-          ),
+          BlocBuilder<CartBloc, CartState>(builder: (ctx, state) {
+            final inCart = state.items.any((i) => i.product.id == reel.productId);
+            return _ActionBtn(
+              icon: inCart ? Icons.shopping_bag : Icons.shopping_bag_outlined,
+              color: inCart ? AppColors.accent : Colors.white,
+              label: 'Корзина', onTap: () {},
+            );
+          }),
         ]),
       ),
 
       // ── Bottom info ──────────────────────────────────────────────────
-      Positioned(left: 12.w, right: 70.w, bottom: 30.h,
+      Positioned(left: 16.w, right: 72.w, bottom: 28.h,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Seller
           Row(children: [
-            Text('@${reel.sellerName}', style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.w600)),
+            Text('@${reel.sellerName}',
+              style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.w600)),
             SizedBox(width: 8.w),
-            Container(padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-              decoration: BoxDecoration(border: Border.all(color: Colors.white54), borderRadius: BorderRadius.circular(20)),
-              child: Text('Подписаться', style: TextStyle(color: Colors.white, fontSize: 10.sp))),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white54),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text('+ Подписаться', style: TextStyle(color: Colors.white, fontSize: 10.sp)),
+            ),
           ]),
           SizedBox(height: 6.h),
-          Text(reel.productTitle, style: TextStyle(color: Colors.white, fontSize: 15.sp, fontWeight: FontWeight.w500)),
-          SizedBox(height: 10.h),
+          Text(reel.productTitle,
+            style: TextStyle(color: Colors.white, fontSize: 15.sp, fontWeight: FontWeight.w500)),
+          SizedBox(height: 12.h),
 
           // Product card
           GestureDetector(
@@ -206,8 +228,8 @@ class _ReelPage extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(reel.productTitle, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.w500)),
-                  Text(FormatUtils.priceTiyin(reel.priceTiyin ~/ 100),
+                    style: TextStyle(color: Colors.white, fontSize: 12.sp)),
+                  Text(FormatUtils.priceTiyin(reel.priceTiyin),
                     style: TextStyle(color: AppColors.accent, fontSize: 14.sp, fontWeight: FontWeight.w700)),
                 ]),
                 SizedBox(width: 10.w),
@@ -219,18 +241,22 @@ class _ReelPage extends StatelessWidget {
       ),
     ]);
   }
+
+  String _fmt(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}K' : '$n';
 }
 
-class _ActionIcon extends StatelessWidget {
+class _ActionBtn extends StatelessWidget {
   final IconData icon; final String label; final VoidCallback onTap; final Color color;
-  const _ActionIcon({required this.icon, required this.label, required this.onTap, this.color = Colors.white});
+  const _ActionBtn({required this.icon, required this.label, required this.onTap, this.color = Colors.white});
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: Column(children: [
-      Icon(icon, color: color, size: 28.sp, shadows: [Shadow(color: Colors.black54, blurRadius: 8)]),
-      SizedBox(height: 2.h),
-      Text(label, style: TextStyle(color: Colors.white, fontSize: 11.sp, shadows: [Shadow(color: Colors.black54, blurRadius: 4)])),
+      Icon(icon, color: color, size: 30.sp,
+        shadows: const [Shadow(color: Colors.black54, blurRadius: 8)]),
+      SizedBox(height: 3.h),
+      Text(label, style: TextStyle(color: Colors.white, fontSize: 11.sp,
+        shadows: const [Shadow(color: Colors.black54, blurRadius: 4)])),
     ]),
   );
 }
