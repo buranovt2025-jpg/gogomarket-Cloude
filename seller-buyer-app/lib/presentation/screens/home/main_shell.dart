@@ -28,8 +28,8 @@ class MainShell extends StatelessWidget {
       body: child,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: AppColors.bgCard,
-          border: Border(top: BorderSide(color: AppColors.border)),
+          color: Theme.of(context).cardTheme.color ?? AppColors.bgCard,
+          border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
         ),
         child: SafeArea(
           child: SizedBox(

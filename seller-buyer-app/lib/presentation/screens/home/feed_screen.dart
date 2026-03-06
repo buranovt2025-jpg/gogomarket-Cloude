@@ -69,13 +69,13 @@ class _FeedBodyState extends State<_FeedBody> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           // ── AppBar ──────────────────────────────────────────────
           SliverAppBar(
             pinned: true, floating: true, snap: true,
-            backgroundColor: Colors.black, elevation: 0,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor, elevation: 0,
             titleSpacing: 14.w,
             title: Row(children: [
               RichText(text: TextSpan(children: [
@@ -239,7 +239,7 @@ class _GridCell extends StatelessWidget {
         if (item.isVideo)
           Positioned(top: 6.h, left: 6.w,
             child: const Icon(Icons.play_arrow, color: Colors.white, size: 18,
-              shadows: [Shadow(color: Colors.black, blurRadius: 6)])),
+              shadows: [Shadow(color: Theme.of(context).scaffoldBackgroundColor, blurRadius: 6)])),
 
         // Bottom gradient
         Positioned(left: 0, right: 0, bottom: 0, height: 70.h,
@@ -258,7 +258,7 @@ class _GridCell extends StatelessWidget {
             SizedBox(width: 2.w),
             Text(item.views, style: TextStyle(
               color: Colors.white, fontSize: 11.sp, fontWeight: FontWeight.w600,
-              shadows: const [Shadow(color: Colors.black, blurRadius: 4)],
+              shadows: const [Shadow(color: Theme.of(context).scaffoldBackgroundColor, blurRadius: 4)],
             )),
           ]),
         ),
@@ -267,7 +267,7 @@ class _GridCell extends StatelessWidget {
         Positioned(left: 5.w, bottom: 8.h,
           child: Text(item.price, style: TextStyle(
             color: AppColors.accent, fontSize: 11.sp, fontWeight: FontWeight.w800,
-            shadows: const [Shadow(color: Colors.black, blurRadius: 6)],
+            shadows: const [Shadow(color: Theme.of(context).scaffoldBackgroundColor, blurRadius: 6)],
           )),
         ),
 

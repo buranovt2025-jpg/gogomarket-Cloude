@@ -20,10 +20,13 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: ListView(padding: EdgeInsets.all(16.w), children: [
         _SectionHeader('ИНТЕРФЕЙС'),
-        _ToggleTile(
-          icon: '🌙', label: 'Тёмная тема',
-          value: true,
-          onChanged: (_) => context.read<ThemeCubit>().toggleTheme(),
+        BlocBuilder<ThemeCubit, ThemeMode>(
+          builder: (ctx, mode) => _ToggleTile(
+            icon: mode == ThemeMode.dark ? '🌙' : '☀️',
+            label: mode == ThemeMode.dark ? 'Тёмная тема' : 'Светлая тема',
+            value: mode == ThemeMode.dark,
+            onChanged: (_) => ctx.read<ThemeCubit>().toggleTheme(),
+          ),
         ),
         _SectionHeader('УВЕДОМЛЕНИЯ'),
         _ToggleTile(icon: '📦', label: 'Заказы',          value: true,  onChanged: (_) {}),
