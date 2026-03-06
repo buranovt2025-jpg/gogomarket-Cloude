@@ -1,4 +1,4 @@
-import 'package:injectable/injectable.dart';
+
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -6,7 +6,7 @@ import '../constants/app_constants.dart';
 
 typedef MessageHandler = void Function(Map<String, dynamic> data);
 
-@singleton
+
 class SocketService {
   io.Socket? _socket;
   final Map<String, List<MessageHandler>> _handlers = {};

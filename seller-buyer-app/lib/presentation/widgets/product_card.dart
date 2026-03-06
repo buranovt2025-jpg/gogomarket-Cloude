@@ -34,9 +34,9 @@ class ProductCard extends StatelessWidget {
             flex: 6,
             child: Stack(fit: StackFit.expand, children: [
               // Photo
-              product.photos.isNotEmpty
+              product.photoUrls.isNotEmpty
                 ? CachedNetworkImage(
-                    imageUrl: product.photos.first.url,
+                    imageUrl: product.photoUrls.isNotEmpty ? product.photoUrls.first : "",
                     fit: BoxFit.cover,
                     placeholder: (_, __) => Shimmer.fromColors(
                       baseColor: AppColors.bgCard, highlightColor: AppColors.bgSurface,

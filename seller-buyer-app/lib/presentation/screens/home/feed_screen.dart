@@ -17,7 +17,7 @@ class FeedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => getIt<FeedBloc>()..add(FeedLoad()),
+      create: (_) => getIt<FeedBloc>()..add(FeedLoadEvent()),
       child: const _FeedBody(),
     );
   }

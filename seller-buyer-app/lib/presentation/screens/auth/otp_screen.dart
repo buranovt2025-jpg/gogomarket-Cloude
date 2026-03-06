@@ -70,12 +70,12 @@ class _OtpScreenState extends State<OtpScreen> {
     if (_code.length != 4 || _loading) return;
     setState(() => _loading = true);
     context.read<AuthBloc>().add(
-      AuthLoginEvent(phone: widget.phone, code: _code),
+      AuthVerifyOtpEvent(phone: widget.phone, code: _code),
     );
   }
 
   void _onAuthState(BuildContext ctx, AuthState state) {
-    if (state is AuthLoading) return;
+    if (state is AuthVerifying) return;
     setState(() => _loading = false);
 
     if (state is AuthAuthenticated) {

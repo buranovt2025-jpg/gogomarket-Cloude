@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:injectable/injectable.dart';
+
 
 import '../../../core/network/api_client.dart';
 import '../../../data/models/product/product_model.dart';
@@ -30,7 +30,7 @@ class ProductError extends ProductState {
   @override List<Object?> get props => [message];
 }
 
-@injectable
+
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
   final ApiClient _api;
   ProductBloc(this._api) : super(ProductInitial()) {

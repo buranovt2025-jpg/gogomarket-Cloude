@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:injectable/injectable.dart';
+
 
 import '../constants/app_constants.dart';
 
-@singleton
+
 class DioClient {
   late final Dio dio;
 

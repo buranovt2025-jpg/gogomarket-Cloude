@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:injectable/injectable.dart';
+
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import '../constants/app_constants.dart';
@@ -7,7 +7,7 @@ import 'auth_interceptor.dart';
 
 @module
 abstract class DioModule {
-  @singleton
+  
   Dio get dio {
     final dio = Dio(
       BaseOptions(

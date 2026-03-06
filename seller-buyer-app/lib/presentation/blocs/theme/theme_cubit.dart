@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:injectable/injectable.dart';
+
 
 import '../../../core/constants/app_constants.dart';
 
-@singleton
+
 class ThemeCubit extends Cubit<ThemeMode> {
   ThemeCubit() : super(_load());
 

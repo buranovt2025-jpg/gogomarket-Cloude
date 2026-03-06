@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
-import 'package:injectable/injectable.dart';
+
 
 import '../../../data/models/product/product_model.dart';
 
@@ -56,7 +56,7 @@ class CartState extends Equatable {
 }
 
 // ── Bloc ──────────────────────────────────────────────────────────────────────
-@injectable
+
 class CartBloc extends HydratedBloc<CartEvent, CartState> {
   CartBloc() : super(const CartState()) {
     on<CartAdd>(_onAdd);

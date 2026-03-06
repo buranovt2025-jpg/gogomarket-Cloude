@@ -76,10 +76,10 @@ class _Body extends StatelessWidget {
             // Photos
             PageView.builder(
               controller: pageCtrl,
-              itemCount: product.photos.isEmpty ? 1 : product.photos.length,
+              itemCount: product.photoUrls.isEmpty ? 1 : product.photoUrls.length,
               onPageChanged: onPhotoChanged,
               itemBuilder: (_, i) {
-                final url = product.photos.isNotEmpty ? product.photos[i].url : '';
+                final url = product.photoUrls.isNotEmpty ? product.photoUrls[i] : '';
                 return url.isEmpty
                   ? Container(color: AppColors.bgCard, child: Center(child: Icon(Icons.image_outlined, size: 64.sp, color: AppColors.textMuted)))
                   : GestureDetector(
@@ -108,10 +108,10 @@ class _Body extends StatelessWidget {
             ),
 
             // Photo dots
-            if (product.photos.length > 1)
+            if (product.photoUrls.length > 1)
               Positioned(bottom: 12.h, left: 0, right: 0,
                 child: Row(mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(product.photos.length, (i) => AnimatedContainer(
+                  children: List.generate(product.photoUrls.length, (i) => AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: i == photoIdx ? 16 : 6, height: 6,
                     margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -300,10 +300,10 @@ class _Body extends StatelessWidget {
       builder: (_) => Scaffold(
         backgroundColor: Colors.black,
         body: PhotoViewGallery.builder(
-          itemCount: product.photos.length,
+          itemCount: product.photoUrls.length,
           pageController: PageController(initialPage: initial),
           builder: (_, i) => PhotoViewGalleryPageOptions(
-            imageProvider: NetworkImage(product.photos[i].url),
+            imageProvider: NetworkImage(product.photoUrls[i]),
             minScale: PhotoViewComputedScale.contained,
           ),
         ),

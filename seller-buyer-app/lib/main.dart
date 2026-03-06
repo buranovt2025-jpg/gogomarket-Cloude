@@ -15,23 +15,17 @@ import 'presentation/blocs/theme/theme_cubit.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // HydratedBloc storage (for CartBloc persistence)
-  final storage = await HydratedStorage.build(
-    storageDirectory: HydratedStorageDirectory(
-      (await getApplicationDocumentsDirectory()).path,
-    ),
+  final dir = await getApplicationDocumentsDirectory();
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory: dir,
   );
-  HydratedBloc.storage = storage;
 
-  // Lock to portrait
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // DI
   await configureDependencies();
-
   runApp(const GogoMarketApp());
 }
 
@@ -48,10 +42,9 @@ class GogoMarketApp extends StatelessWidget {
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (_, themeMode) => ScreenUtilInit(
-          designSize: const Size(390, 844), // iPhone 14 base
+          designSize: const Size(390, 844),
           minTextAdapt: true,
-          splitScreenMode: true,
-          builder: (_, child) => MaterialApp.router(
+          builder: (_, __) => MaterialApp.router(
             title: 'GogoMarket',
             debugShowCheckedModeBanner: false,
             themeMode: themeMode,
@@ -69,19 +62,14 @@ class GogoMarketApp extends StatelessWidget {
     brightness: Brightness.dark,
     scaffoldBackgroundColor: AppColors.bgDark,
     colorScheme: const ColorScheme.dark(
-      primary:   AppColors.accent,
+      primary: AppColors.accent,
       secondary: AppColors.accent,
-      surface:   AppColors.bgCard,
+      surface: AppColors.bgCard,
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.bgDark,
       foregroundColor: AppColors.textPrimary,
       elevation: 0,
-      centerTitle: false,
-      titleTextStyle: TextStyle(
-        color: AppColors.textPrimary,
-        fontSize: 18, fontWeight: FontWeight.w700,
-      ),
     ),
     fontFamily: 'Inter',
   );
@@ -89,10 +77,7 @@ class GogoMarketApp extends StatelessWidget {
   ThemeData _lightTheme() => ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    colorScheme: ColorScheme.light(
-      primary: AppColors.accent,
-      secondary: AppColors.accent,
-    ),
+    colorScheme: ColorScheme.light(primary: AppColors.accent),
     fontFamily: 'Inter',
   );
 }

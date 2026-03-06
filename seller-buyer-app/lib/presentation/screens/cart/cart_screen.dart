@@ -72,8 +72,8 @@ class _CartItem extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: SizedBox(width: 72.w, height: 72.w,
-            child: item.product.photos.isNotEmpty
-              ? CachedNetworkImage(imageUrl: item.product.photos.first.url, fit: BoxFit.cover)
+            child: item.product.photoUrls.isNotEmpty
+              ? CachedNetworkImage(imageUrl: item.product.photoUrls.isNotEmpty ? product.photoUrls.first : "", fit: BoxFit.cover)
               : Container(color: AppColors.bgSurface, child: const Icon(Icons.image_outlined, color: AppColors.textMuted))),
         ),
         SizedBox(width: 12.w),
