@@ -38,16 +38,11 @@ jobs:
           APK=$(find seller-buyer-app/build -name "app-release.apk" | head -1)
           SIZE=$(du -sh "$APK" | cut -f1)
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          MSG="✅ GogoMarket APK готов!
-
-📦 Размер: ${SIZE}
-🔖 Коммит: ${SHORT_SHA}
-💬 ${{ github.event.head_commit.message }}"
-
+          CAPTION="✅ GogoMarket APK готов! Размер: ${SIZE} | ${SHORT_SHA}"
           curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument" \
             -F "chat_id=${TG_CHAT_ID}" \
             -F "document=@${APK}" \
-            -F "caption=${MSG}"
+            -F "caption=${CAPTION}"
 
       - name: Notify failure
         if: failure()
@@ -55,7 +50,4 @@ jobs:
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
             -d "chat_id=${TG_CHAT_ID}" \
-            --data-urlencode "text=❌ Сборка провалилась!
-🔖 ${SHORT_SHA}
-💬 ${{ github.event.head_commit.message }}
-🔗 https://github.com/${{ github.repository }}/actions"
+            -d "text=❌ Сборка провалилась! ${SHORT_SHA} https://github.com/${{ github.repository }}/actions"
