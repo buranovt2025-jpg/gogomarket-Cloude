@@ -39,7 +39,7 @@ class AppTheme {
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: AppColors.bgCard,
         elevation: 0,
         shape: RoundedRectangleBorder(

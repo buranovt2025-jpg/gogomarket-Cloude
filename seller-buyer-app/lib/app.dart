@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/di/injection.dart';
 import 'core/router/app_router.dart';
@@ -22,34 +21,18 @@ class GogoMarketApp extends StatelessWidget {
         BlocProvider(create: (_) => getIt<ThemeCubit>()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
-        builder: (context, themeMode) {
-          return ScreenUtilInit(
-            designSize: const Size(390, 844), // iPhone 14 base
-            minTextAdapt: true,
-            splitScreenMode: true,
-            builder: (context, child) {
-              return MaterialApp.router(
-                title: 'GogoMarket',
-                debugShowCheckedModeBanner: false,
-                theme: AppTheme.lightTheme,
-                darkTheme: AppTheme.darkTheme,
-                themeMode: themeMode,
-                routerConfig: AppRouter.router,
-                localizationsDelegates: const [
-                  GlobalMaterialLocalizations.delegate,
-                  GlobalWidgetsLocalizations.delegate,
-                  GlobalCupertinoLocalizations.delegate,
-                ],
-                supportedLocales: const [
-                  Locale('ru'),
-                  Locale('uz'),
-                  Locale('en'),
-                ],
-                locale: const Locale('ru'),
-              );
-            },
-          );
-        },
+        builder: (context, themeMode) => ScreenUtilInit(
+          designSize: const Size(390, 844),
+          minTextAdapt: true,
+          builder: (context, child) => MaterialApp.router(
+            title: 'GogoMarket',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
+            routerConfig: AppRouter.router,
+          ),
+        ),
       ),
     );
   }
