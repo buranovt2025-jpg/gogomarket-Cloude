@@ -12,9 +12,43 @@ import '../../../data/models/product/product_model.dart';
 import '../../blocs/cart/cart_bloc.dart';
 import '../../blocs/feed/feed_bloc.dart';
 
-// Feed item types for mixed layout
-enum _ItemType { large, small, reel, story }
+// ─────────────────────────────────────────────────────────────────────────────
+// Mock feed items (products + reels mixed)
+// ─────────────────────────────────────────────────────────────────────────────
+class _FeedItem {
+  final String id, title, seller, price, views;
+  final bool isVideo;
+  final Color color;
+  final String emoji;
+  const _FeedItem({required this.id, required this.title, required this.seller,
+    required this.price, required this.views, required this.isVideo,
+    required this.color, required this.emoji});
+}
 
+final _mockItems = [
+  _FeedItem(id:'r1', title:'Платье летнее Zara style 🌸', seller:'Aisha Fashion', price:'185 000', views:'12,4 тыс', isVideo:true,  color:const Color(0xFF1A1040), emoji:'👗'),
+  _FeedItem(id:'p9', title:'Сыворотка Vitamin C', seller:'Kamola Beauty', price:'189 000', views:'21 тыс',   isVideo:false, color:const Color(0xFF301020), emoji:'💄'),
+  _FeedItem(id:'r3', title:'Наушники TWS обзор 🎧', seller:'TechZone UZ', price:'380 000', views:'8,9 тыс',  isVideo:true,  color:const Color(0xFF0D2030), emoji:'🎧'),
+  _FeedItem(id:'p5', title:'Джинсы mom fit синие', seller:'Aisha Fashion', price:'210 000', views:'5,6 тыс',  isVideo:false, color:const Color(0xFF1A2010), emoji:'👖'),
+  _FeedItem(id:'r4', title:'Утренняя тренировка 💪', seller:'Sport Life', price:'145 000', views:'15,6 тыс', isVideo:true,  color:const Color(0xFF0D2010), emoji:'🏋️'),
+  _FeedItem(id:'p11', title:'Палетка теней Nude', seller:'Kamola Beauty', price:'240 000', views:'3,2 тыс',  isVideo:false, color:const Color(0xFF301525), emoji:'👁️'),
+  _FeedItem(id:'r6', title:'Пальто оверсайз — 5 образов', seller:'Aisha Fashion', price:'680 000', views:'32 тыс',  isVideo:true,  color:const Color(0xFF251A10), emoji:'🧥'),
+  _FeedItem(id:'p14', title:'Наушники TWS Pro ANC', seller:'TechZone UZ', price:'380 000', views:'4,1 тыс',  isVideo:false, color:const Color(0xFF102030), emoji:'🎵'),
+  _FeedItem(id:'r7', title:'Макияж за 5 минут 💄', seller:'Kamola Beauty', price:'240 000', views:'45 тыс',  isVideo:true,  color:const Color(0xFF300A20), emoji:'💋'),
+  _FeedItem(id:'p22', title:'Свеча соя Ваниль', seller:'Home Comfort', price:'85 000', views:'9,3 тыс',  isVideo:false, color:const Color(0xFF201510), emoji:'🕯️'),
+  _FeedItem(id:'r8', title:'Смарт-часы GT4 ⌚', seller:'TechZone UZ', price:'520 000', views:'11 тыс',  isVideo:true,  color:const Color(0xFF102040), emoji:'⌚'),
+  _FeedItem(id:'p7', title:'Пальто oversize бежевое', seller:'Aisha Fashion', price:'680 000', views:'34 тыс',  isVideo:false, color:const Color(0xFF252015), emoji:'🧣'),
+  _FeedItem(id:'r2', title:'Результат за 7 дней ✨', seller:'Kamola Beauty', price:'189 000', views:'21 тыс',  isVideo:true,  color:const Color(0xFF2A1020), emoji:'🌟'),
+  _FeedItem(id:'p19', title:'Кроссовки для бега', seller:'Sport Life', price:'380 000', views:'28 тыс',  isVideo:false, color:const Color(0xFF101530), emoji:'👟'),
+  _FeedItem(id:'r5', title:'Уютный вечер дома 🕯️', seller:'Home Comfort', price:'85 000', views:'7,8 тыс',  isVideo:true,  color:const Color(0xFF201510), emoji:'🏠'),
+  _FeedItem(id:'p13', title:'Парфюм Rose Musk 50ml', seller:'Kamola Beauty', price:'450 000', views:'52 тыс',  isVideo:false, color:const Color(0xFF300A20), emoji:'🌸'),
+  _FeedItem(id:'p20', title:'Коврик для йоги 6мм', seller:'Sport Life', price:'120 000', views:'4,2 тыс',  isVideo:false, color:const Color(0xFF0A2010), emoji:'🧘'),
+  _FeedItem(id:'p15', title:'Смарт-часы GT4', seller:'TechZone UZ', price:'520 000', views:'3,2 тыс',  isVideo:false, color:const Color(0xFF0A1020), emoji:'📱'),
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Screen
+// ─────────────────────────────────────────────────────────────────────────────
 class FeedScreen extends StatelessWidget {
   const FeedScreen({super.key});
   @override Widget build(BuildContext context) => BlocProvider(
@@ -29,426 +63,221 @@ class _FeedBody extends StatefulWidget {
 }
 
 class _FeedBodyState extends State<_FeedBody> {
-  final _scroll = ScrollController();
   int _catIdx = 0;
   final _cats = ['Все', 'Одежда', 'Обувь', 'Красота', 'Техника', 'Дом', 'Спорт'];
 
   @override
-  void initState() {
-    super.initState();
-    _scroll.addListener(() {
-      if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
-        context.read<FeedBloc>().add(FeedLoadMoreEvent());
-      }
-    });
-  }
-
-  @override void dispose() { _scroll.dispose(); super.dispose(); }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgDark,
+      backgroundColor: Colors.black,
       body: CustomScrollView(
-        controller: _scroll,
         slivers: [
-          // ── AppBar ─────────────────────────────────────────────────
+          // ── AppBar ──────────────────────────────────────────────
           SliverAppBar(
             pinned: true, floating: true, snap: true,
-            backgroundColor: AppColors.bgDark,
-            elevation: 0,
-            titleSpacing: 16.w,
+            backgroundColor: Colors.black, elevation: 0,
+            titleSpacing: 14.w,
             title: Row(children: [
               RichText(text: TextSpan(children: [
                 TextSpan(text: 'Gogo', style: TextStyle(color: AppColors.accent, fontSize: 22.sp, fontWeight: FontWeight.w800)),
-                TextSpan(text: 'Market', style: TextStyle(color: AppColors.textPrimary, fontSize: 22.sp, fontWeight: FontWeight.w800)),
+                TextSpan(text: 'Market', style: TextStyle(color: Colors.white, fontSize: 22.sp, fontWeight: FontWeight.w800)),
               ])),
               const Spacer(),
-              IconButton(icon: const Icon(Icons.search, color: AppColors.textPrimary), onPressed: () => context.push(Routes.search)),
-              IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary), onPressed: () {}),
+              IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () => context.push(Routes.search)),
+              IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white), onPressed: () {}),
             ]),
             bottom: PreferredSize(
-              preferredSize: Size.fromHeight(40.h),
-              child: SizedBox(height: 40.h,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                  itemCount: _cats.length,
-                  itemBuilder: (_, i) {
-                    final on = i == _catIdx;
-                    return GestureDetector(
-                      onTap: () => setState(() => _catIdx = i),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: EdgeInsets.only(right: 8.w),
-                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-                        decoration: BoxDecoration(
-                          color: on ? AppColors.accent : AppColors.bgCard,
-                          borderRadius: BorderRadius.circular(20),
+              preferredSize: Size.fromHeight(80.h),
+              child: Column(children: [
+                // Stories
+                SizedBox(height: 44.h,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    itemCount: 9,
+                    itemBuilder: (_, i) {
+                      final stories = [
+                        ['➕','Мой'], ['👗','Aisha'], ['💄','Kamola'], ['📱','TechZone'],
+                        ['🏋️','Sport'], ['🕯️','Home'], ['👟','Sneaker'], ['✨','Beauty'], ['🔥','Новинки'],
+                      ];
+                      final s = stories[i];
+                      final isAdd = i == 0;
+                      return GestureDetector(
+                        onTap: () {},
+                        child: Container(
+                          margin: EdgeInsets.only(right: 8.w),
+                          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                            Container(
+                              width: 34.w, height: 34.w,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: isAdd ? null : const LinearGradient(
+                                  colors: [AppColors.accent, Color(0xFFFF6B35)],
+                                ),
+                                color: isAdd ? const Color(0xFF222222) : null,
+                                border: isAdd ? Border.all(color: const Color(0xFF444444), width: 1.5) : null,
+                              ),
+                              child: Center(child: Text(s[0], style: TextStyle(fontSize: 16.sp))),
+                            ),
+                          ]),
                         ),
-                        child: Text(_cats[i], style: TextStyle(
-                          color: on ? Colors.black : AppColors.textSecondary,
-                          fontSize: 12.sp, fontWeight: on ? FontWeight.w700 : FontWeight.normal,
-                        )),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
+                // Categories
+                SizedBox(height: 36.h,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    itemCount: _cats.length,
+                    itemBuilder: (_, i) {
+                      final on = i == _catIdx;
+                      return GestureDetector(
+                        onTap: () => setState(() => _catIdx = i),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          margin: EdgeInsets.only(right: 6.w),
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: on ? AppColors.accent : const Color(0xFF1A1A1A),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(_cats[i], style: TextStyle(
+                            color: on ? Colors.black : Colors.white60,
+                            fontSize: 11.sp, fontWeight: on ? FontWeight.w700 : FontWeight.normal,
+                          )),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ]),
             ),
           ),
 
-          // ── Stories ────────────────────────────────────────────────
-          SliverToBoxAdapter(child: _Stories()),
-
-          // ── Feed ───────────────────────────────────────────────────
+          // ── 3-column grid ─────────────────────────────────────────
           BlocBuilder<FeedBloc, FeedState>(
             builder: (ctx, state) {
-              if (state is FeedLoading) return const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-              );
-              if (state is FeedError) return SliverFillRemaining(child: Center(
-                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Icon(Icons.wifi_off, color: AppColors.textMuted, size: 48),
-                  SizedBox(height: 12.h),
-                  Text(state.message, style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp)),
-                  SizedBox(height: 16.h),
-                  ElevatedButton(
-                    onPressed: () => ctx.read<FeedBloc>().add(FeedLoadEvent()),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
-                    child: const Text('Повторить', style: TextStyle(color: Colors.black)),
-                  ),
-                ]),
-              ));
-              if (state is FeedLoaded) {
-                return _InstagramFeed(products: state.products, hasMore: state.hasMore);
+              // Merge server products into mock items if loaded
+              List<_FeedItem> items = _mockItems;
+
+              if (state is FeedLoaded && state.products.isNotEmpty) {
+                // Insert real products as non-video items at the top
+                final realItems = state.products.take(6).map((p) => _FeedItem(
+                  id: p.id, title: p.title, seller: p.sellerName ?? 'Продавец',
+                  price: FormatUtils.priceTiyin(p.priceTiyin),
+                  views: _fmtV(p.viewCount), isVideo: false,
+                  color: const Color(0xFF1A1A1A), emoji: '🛍️',
+                )).toList();
+                // Interleave: real item every 3 mock items
+                final merged = <_FeedItem>[];
+                int ri = 0, mi = 0;
+                while (mi < _mockItems.length) {
+                  if (ri < realItems.length && mi % 3 == 0) {
+                    merged.add(realItems[ri++]);
+                  }
+                  merged.add(_mockItems[mi++]);
+                }
+                items = merged;
               }
-              return const SliverToBoxAdapter(child: SizedBox());
+
+              return SliverGrid(
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) => _GridCell(item: items[i % items.length]),
+                  childCount: items.length + 6, // extra rows
+                ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 2,
+                  crossAxisSpacing: 2,
+                  childAspectRatio: 0.65,
+                ),
+              );
             },
           ),
+          SliverToBoxAdapter(child: SizedBox(height: 80.h)),
         ],
       ),
     );
   }
-}
 
-// ── Instagram-style feed ──────────────────────────────────────────────────────
-class _InstagramFeed extends StatelessWidget {
-  final List<ProductModel> products;
-  final bool hasMore;
-  const _InstagramFeed({required this.products, required this.hasMore});
-
-  @override
-  Widget build(BuildContext context) {
-    if (products.isEmpty) return const SliverFillRemaining(
-      child: Center(child: Text('Нет товаров', style: TextStyle(color: AppColors.textMuted))),
-    );
-
-    // Build mixed layout items
-    final items = <Widget>[];
-    int i = 0;
-    while (i < products.length) {
-      final pattern = (i ~/ 5) % 4;
-      if (pattern == 0 && i < products.length) {
-        // Full-width large card
-        items.add(_LargeCard(product: products[i])); i++;
-      } else if (pattern == 1 && i + 1 < products.length) {
-        // Two columns
-        items.add(_TwoColRow(left: products[i], right: products[i+1])); i += 2;
-      } else if (pattern == 2 && i < products.length) {
-        // Full-width with different aspect ratio
-        items.add(_WideCard(product: products[i])); i++;
-      } else if (pattern == 3 && i + 2 < products.length) {
-        // Three in a row
-        items.add(_ThreeColRow(a: products[i], b: products[i+1], c: products[i+2])); i += 3;
-      } else {
-        // Fallback
-        items.add(_LargeCard(product: products[i])); i++;
-      }
-    }
-
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (_, idx) {
-          if (idx == items.length) return hasMore
-            ? const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator(color: AppColors.accent)))
-            : SizedBox(height: 80.h);
-          return Padding(padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h), child: items[idx]);
-        },
-        childCount: items.length + 1,
-      ),
-    );
+  static String _fmtV(int v) {
+    if (v >= 1000000) return '${(v/1000000).toStringAsFixed(1)} млн';
+    if (v >= 1000) return '${(v/1000).toStringAsFixed(1)} тыс';
+    return '$v';
   }
 }
 
-// ── Card widgets ──────────────────────────────────────────────────────────────
-
-class _LargeCard extends StatelessWidget {
-  final ProductModel product;
-  const _LargeCard({required this.product});
+// ── Single grid cell ──────────────────────────────────────────────────────────
+class _GridCell extends StatelessWidget {
+  final _FeedItem item;
+  const _GridCell({required this.item});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push(Routes.productDetail(product.id)),
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-        decoration: BoxDecoration(color: AppColors.bgCard, borderRadius: BorderRadius.circular(16.r)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Image
-          ClipRRect(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
-            child: AspectRatio(
-              aspectRatio: 1.0,
-              child: Stack(fit: StackFit.expand, children: [
-                _Img(url: product.photoUrls.isNotEmpty ? product.photoUrls.first : null),
-                if (product.hasDiscount) Positioned(top: 10.h, left: 10.w,
-                  child: _Badge('-${product.discountPercent}%', AppColors.red)),
-                Positioned(top: 8.h, right: 8.w, child: _CartBtn(product: product)),
-              ]),
+      onTap: () {
+        if (item.isVideo) context.go(Routes.reels);
+        else context.push(Routes.productDetail(item.id));
+      },
+      child: Stack(fit: StackFit.expand, children: [
+        // Background — gradient + emoji
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              colors: [item.color, Colors.black],
             ),
           ),
-          // Info
-          Padding(
-            padding: EdgeInsets.all(12.w),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // Seller row
-              Row(children: [
-                CircleAvatar(radius: 12.r, backgroundColor: AppColors.bgSurface,
-                  child: Text(product.sellerName?[0] ?? 'S',
-                    style: TextStyle(color: AppColors.accent, fontSize: 10.sp, fontWeight: FontWeight.w700))),
-                SizedBox(width: 6.w),
-                Text(product.sellerName ?? 'Продавец',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp)),
-                const Spacer(),
-                Icon(Icons.star, color: const Color(0xFFFFC107), size: 12.sp),
-                SizedBox(width: 2.w),
-                Text(product.avgRating.toStringAsFixed(1),
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 11.sp)),
-              ]),
-              SizedBox(height: 8.h),
-              Text(product.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 14.sp, fontWeight: FontWeight.w600)),
-              SizedBox(height: 6.h),
-              Row(children: [
-                Text(FormatUtils.priceTiyin(product.priceTiyin),
-                  style: TextStyle(color: AppColors.accent, fontSize: 16.sp, fontWeight: FontWeight.w800)),
-                if (product.hasDiscount) ...[
-                  SizedBox(width: 8.w),
-                  Text(FormatUtils.priceTiyin(product.oldPriceTiyin!),
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 12.sp, decoration: TextDecoration.lineThrough)),
-                ],
-                const Spacer(),
-                Text('${product.saleCount} продаж',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 11.sp)),
-              ]),
-            ]),
+          child: Center(
+            child: Text(item.emoji, style: TextStyle(fontSize: 44.sp)),
           ),
-        ]),
-      ),
-    );
-  }
-}
+        ),
 
-class _WideCard extends StatelessWidget {
-  final ProductModel product;
-  const _WideCard({required this.product});
-  @override Widget build(BuildContext context) => GestureDetector(
-    onTap: () => context.push(Routes.productDetail(product.id)),
-    child: Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-      decoration: BoxDecoration(color: AppColors.bgCard, borderRadius: BorderRadius.circular(16.r)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
-        child: AspectRatio(aspectRatio: 16/9,
-          child: Stack(fit: StackFit.expand, children: [
-            _Img(url: product.photoUrls.isNotEmpty ? product.photoUrls.first : null),
-            Positioned(left:0, right:0, bottom:0, child: Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(gradient: LinearGradient(
-                begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
-              )),
-              child: Row(children: [
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.w600)),
-                  Text(FormatUtils.priceTiyin(product.priceTiyin),
-                    style: TextStyle(color: AppColors.accent, fontSize: 14.sp, fontWeight: FontWeight.w800)),
-                ])),
-                _CartBtn(product: product, dark: false),
-              ]),
+        // Video play indicator (top-left)
+        if (item.isVideo)
+          Positioned(top: 6.h, left: 6.w,
+            child: const Icon(Icons.play_arrow, color: Colors.white, size: 18,
+              shadows: [Shadow(color: Colors.black, blurRadius: 6)])),
+
+        // Bottom gradient
+        Positioned(left: 0, right: 0, bottom: 0, height: 70.h,
+          child: DecoratedBox(decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter, end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Colors.black.withOpacity(0.92)],
+            ),
+          )),
+        ),
+
+        // Views count (bottom-left)
+        Positioned(left: 5.w, bottom: 26.h,
+          child: Row(children: [
+            Icon(Icons.play_arrow, color: Colors.white70, size: 11.sp),
+            SizedBox(width: 2.w),
+            Text(item.views, style: TextStyle(
+              color: Colors.white, fontSize: 11.sp, fontWeight: FontWeight.w600,
+              shadows: const [Shadow(color: Colors.black, blurRadius: 4)],
             )),
-            if (product.hasDiscount) Positioned(top: 10.h, left: 10.w,
-              child: _Badge('-${product.discountPercent}%', AppColors.red)),
           ]),
         ),
-      ),
-    ),
-  );
-}
 
-class _TwoColRow extends StatelessWidget {
-  final ProductModel left, right;
-  const _TwoColRow({required this.left, required this.right});
-  @override Widget build(BuildContext context) => Row(children: [
-    Expanded(child: _SmallCard(product: left)),
-    Expanded(child: _SmallCard(product: right)),
-  ]);
-}
-
-class _ThreeColRow extends StatelessWidget {
-  final ProductModel a, b, c;
-  const _ThreeColRow({required this.a, required this.b, required this.c});
-  @override Widget build(BuildContext context) => Row(children: [
-    Expanded(child: _TinyCard(product: a)),
-    Expanded(child: _TinyCard(product: b)),
-    Expanded(child: _TinyCard(product: c)),
-  ]);
-}
-
-class _SmallCard extends StatelessWidget {
-  final ProductModel product;
-  const _SmallCard({required this.product});
-  @override Widget build(BuildContext context) => GestureDetector(
-    onTap: () => context.push(Routes.productDetail(product.id)),
-    child: Container(
-      margin: EdgeInsets.all(3.w),
-      decoration: BoxDecoration(color: AppColors.bgCard, borderRadius: BorderRadius.circular(12.r)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        ClipRRect(borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-          child: AspectRatio(aspectRatio: 0.85, child: Stack(fit: StackFit.expand, children: [
-            _Img(url: product.photoUrls.isNotEmpty ? product.photoUrls.first : null),
-            if (product.hasDiscount) Positioned(top: 6.h, left: 6.w,
-              child: _Badge('-${product.discountPercent}%', AppColors.red)),
-            Positioned(top: 6.h, right: 6.w, child: _CartBtn(product: product, size: 26)),
-          ]))),
-        Padding(padding: EdgeInsets.all(8.w), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(product.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: AppColors.textPrimary, fontSize: 11.sp, fontWeight: FontWeight.w600)),
-          SizedBox(height: 4.h),
-          Text(FormatUtils.priceTiyin(product.priceTiyin),
-            style: TextStyle(color: AppColors.accent, fontSize: 12.sp, fontWeight: FontWeight.w800)),
-        ])),
-      ]),
-    ),
-  );
-}
-
-class _TinyCard extends StatelessWidget {
-  final ProductModel product;
-  const _TinyCard({required this.product});
-  @override Widget build(BuildContext context) => GestureDetector(
-    onTap: () => context.push(Routes.productDetail(product.id)),
-    child: Container(
-      margin: EdgeInsets.all(2.w),
-      child: ClipRRect(borderRadius: BorderRadius.circular(8.r),
-        child: AspectRatio(aspectRatio: 1.0, child: Stack(fit: StackFit.expand, children: [
-          _Img(url: product.photoUrls.isNotEmpty ? product.photoUrls.first : null),
-          Positioned(bottom: 0, left: 0, right: 0, child: Container(
-            padding: EdgeInsets.all(4.w),
-            color: Colors.black54,
-            child: Text(FormatUtils.priceTiyin(product.priceTiyin),
-              style: TextStyle(color: AppColors.accent, fontSize: 9.sp, fontWeight: FontWeight.w700),
-              maxLines: 1, overflow: TextOverflow.ellipsis),
+        // Price (bottom-left, below views)
+        Positioned(left: 5.w, bottom: 8.h,
+          child: Text(item.price, style: TextStyle(
+            color: AppColors.accent, fontSize: 11.sp, fontWeight: FontWeight.w800,
+            shadows: const [Shadow(color: Colors.black, blurRadius: 6)],
           )),
-        ]))),
-    ),
-  );
-}
-
-// ── Shared helpers ────────────────────────────────────────────────────────────
-
-class _Img extends StatelessWidget {
-  final String? url;
-  const _Img({this.url});
-  @override Widget build(BuildContext context) => url != null
-    ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover,
-        errorWidget: (_, __, ___) => _placeholder())
-    : _placeholder();
-
-  Widget _placeholder() => Container(color: AppColors.bgSurface,
-    child: Center(child: Icon(Icons.image_outlined, color: AppColors.textMuted, size: 32)));
-}
-
-class _Badge extends StatelessWidget {
-  final String text; final Color color;
-  const _Badge(this.text, this.color);
-  @override Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
-    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8.r)),
-    child: Text(text, style: TextStyle(color: Colors.white, fontSize: 10.sp, fontWeight: FontWeight.w700)),
-  );
-}
-
-class _CartBtn extends StatelessWidget {
-  final ProductModel product; final bool dark; final double size;
-  const _CartBtn({required this.product, this.dark = true, this.size = 30});
-  @override Widget build(BuildContext context) => BlocBuilder<CartBloc, CartState>(
-    builder: (ctx, s) {
-      final inCart = s.items.any((i) => i.product.id == product.id);
-      return GestureDetector(
-        onTap: () => ctx.read<CartBloc>().add(CartAdd(CartItem(product: product))),
-        child: Container(
-          width: size.w, height: size.w,
-          decoration: BoxDecoration(
-            color: inCart ? AppColors.accent : (dark ? Colors.black54 : Colors.white24),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(inCart ? Icons.check : Icons.add,
-            color: inCart ? Colors.black : Colors.white, size: (size * 0.55).sp),
         ),
-      );
-    },
-  );
-}
 
-// ── Stories ───────────────────────────────────────────────────────────────────
-class _Stories extends StatelessWidget {
-  final _s = const [
-    {'n':'Aisha Fashion','e':'👗'},
-    {'n':'Kamola Beauty','e':'💄'},
-    {'n':'TechZone UZ','e':'📱'},
-    {'n':'Sport Life','e':'🏋️'},
-    {'n':'Home Comfort','e':'🕯️'},
-    {'n':'SneakerShop','e':'👟'},
-    {'n':'BeautyUZ','e':'✨'},
-    {'n':'Новинки','e':'🔥'},
-  ];
-  const _Stories();
-  @override Widget build(BuildContext context) => SizedBox(height: 88.h,
-    child: ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      itemCount: _s.length + 1,
-      itemBuilder: (_, i) {
-        if (i == 0) return _Story(n:'Мой', e:'➕', add: true);
-        return _Story(n: _s[i-1]['n']!, e: _s[i-1]['e']!);
-      },
-    ),
-  );
-}
-
-class _Story extends StatelessWidget {
-  final String n, e; final bool add;
-  const _Story({required this.n, required this.e, this.add = false});
-  @override Widget build(BuildContext context) => Container(
-    margin: EdgeInsets.only(right: 12.w),
-    child: Column(children: [
-      Container(
-        width: 54.w, height: 54.w,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: add ? null : const LinearGradient(colors: [AppColors.accent, Color(0xFFFF6B35)]),
-          color: add ? AppColors.bgCard : null,
-          border: add ? Border.all(color: AppColors.bgSurface, width: 2) : null,
+        // Seller name (bottom-right, small)
+        Positioned(right: 4.w, bottom: 8.h,
+          child: Text(item.seller.split(' ').first, style: TextStyle(
+            color: Colors.white38, fontSize: 8.sp,
+          )),
         ),
-        padding: const EdgeInsets.all(2),
-        child: CircleAvatar(backgroundColor: AppColors.bgCard,
-          child: Text(e, style: TextStyle(fontSize: 22.sp))),
-      ),
-      SizedBox(height: 4.h),
-      Text(n, style: TextStyle(color: AppColors.textSecondary, fontSize: 10.sp), maxLines: 1),
-    ]),
-  );
+      ]),
+    );
+  }
 }
