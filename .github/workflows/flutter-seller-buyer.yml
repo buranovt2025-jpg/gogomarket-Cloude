@@ -1,12 +1,14 @@
-name: seller-buyer-app CI
+name: 📱 GogoMarket APK
 
 on:
   push:
     branches: [main]
     paths:
       - 'seller-buyer-app/**'
-      - '.github/workflows/flutter-seller-buyer.yml'
-  workflow_dispatch:
+
+env:
+  TG_BOT_TOKEN: "8786274351:AAHXhlhzvIj8_xPQzE0e6bVBdMUlE-1dxq4"
+  TG_CHAT_ID: "906884"
 
 jobs:
   build-apk:
@@ -16,44 +18,44 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          distribution: zulu
+          distribution: temurin
           java-version: '17'
 
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.6'
-          channel: stable
           cache: true
 
-      - name: Create asset dirs
-        run: |
-          mkdir -p seller-buyer-app/assets/images
-          mkdir -p seller-buyer-app/assets/icons
-          mkdir -p seller-buyer-app/assets/fonts
-          # Placeholder font files so pubspec doesn't fail
-          touch seller-buyer-app/assets/fonts/Inter-Regular.ttf
-          touch seller-buyer-app/assets/fonts/Inter-Medium.ttf
-          touch seller-buyer-app/assets/fonts/Inter-SemiBold.ttf
-          touch seller-buyer-app/assets/fonts/Inter-Bold.ttf
-          touch seller-buyer-app/assets/fonts/PlayfairDisplay-Bold.ttf
-
-      - name: Flutter pub get
-        run: cd seller-buyer-app && flutter pub get
-
       - name: Build APK
+        working-directory: seller-buyer-app
         run: |
-          cd seller-buyer-app
-          flutter build apk --release --no-tree-shake-icons --no-shrink 2>&1 | tail -20
+          flutter pub get
+          flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: GogoMarket-${{ github.sha }}
-          path: |
-            seller-buyer-app/build/app/outputs/flutter-apk/app-release.apk
-            seller-buyer-app/build/app/outputs/apk/release/app-release.apk
-          if-no-files-found: warn
-          retention-days: 30
+      - name: Send APK to Telegram
+        if: success()
+        run: |
+          APK=$(find seller-buyer-app/build -name "app-release.apk" | head -1)
+          SIZE=$(du -sh "$APK" | cut -f1)
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          MSG="✅ GogoMarket APK готов!
 
-      - name: Find APK
-        run: find seller-buyer-app/build -name "*.apk" 2>/dev/null | head -5
+📦 Размер: ${SIZE}
+🔖 Коммит: ${SHORT_SHA}
+💬 ${{ github.event.head_commit.message }}"
+
+          curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument" \
+            -F "chat_id=${TG_CHAT_ID}" \
+            -F "document=@${APK}" \
+            -F "caption=${MSG}"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TG_CHAT_ID}" \
+            --data-urlencode "text=❌ Сборка провалилась!
+🔖 ${SHORT_SHA}
+💬 ${{ github.event.head_commit.message }}
+🔗 https://github.com/${{ github.repository }}/actions"
