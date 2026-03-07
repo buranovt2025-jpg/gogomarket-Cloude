@@ -28,7 +28,7 @@ class OrderDetailScreen extends StatelessWidget {
         backgroundColor: AppColors.bgDark,
         foregroundColor: AppColors.textPrimary,
         actions: [
-          IconButton(icon: const Icon(Icons.support_agent_outlined), onPressed: () {}),
+          IconButton(icon: Icon(Icons.support_agent_outlined), onPressed: () {}),
         ],
       ),
       body: ListView(padding: EdgeInsets.all(16.w), children: [

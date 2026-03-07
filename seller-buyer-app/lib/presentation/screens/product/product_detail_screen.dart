@@ -96,7 +96,7 @@ class _Body extends StatelessWidget {
                 onTap: () => context.pop(),
                 child: Container(width: 38, height: 38,
                   decoration: BoxDecoration(color: Colors.black.withOpacity(0.54), shape: BoxShape.circle),
-                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16)),
+                  child: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16)),
               ),
             ),
 
@@ -104,7 +104,7 @@ class _Body extends StatelessWidget {
             Positioned(top: 48.h, right: 16.w,
               child: Container(width: 38, height: 38,
                 decoration: BoxDecoration(color: Colors.black.withOpacity(0.54), shape: BoxShape.circle),
-                child: IconButton(icon: const Icon(Icons.share_outlined, color: Colors.white, size: 16), onPressed: () {})),
+                child: IconButton(icon: Icon(Icons.share_outlined, color: Colors.white, size: 16), onPressed: () {})),
             ),
 
             // Photo dots

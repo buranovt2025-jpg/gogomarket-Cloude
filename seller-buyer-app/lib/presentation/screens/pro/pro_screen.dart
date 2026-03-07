@@ -101,7 +101,7 @@ class _ProScreenState extends State<ProScreen> {
         // Bottom CTA
         Container(
           padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 36.h),
-          decoration: const BoxDecoration(color: AppColors.bgCard, border: Border(top: BorderSide(color: AppColors.border))),
+          decoration: BoxDecoration(color: AppColors.bgCard, border: Border(top: BorderSide(color: AppColors.border))),
           child: SizedBox(
             width: double.infinity, height: 52.h,
             child: ElevatedButton(

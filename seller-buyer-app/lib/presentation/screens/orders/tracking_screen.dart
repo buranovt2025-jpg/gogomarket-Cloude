@@ -117,7 +117,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
           bottom: 0, left: 0, right: 0,
           child: Container(
             padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 36.h),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.bgCard,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.45), blurRadius: 20)],
