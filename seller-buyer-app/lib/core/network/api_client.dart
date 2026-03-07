@@ -211,4 +211,10 @@ class ApiClient {
     return Map<String,dynamic>.from(res.data);
   }
 
+
+  Future<Map<String,dynamic>> getSellerAnalytics({int days = 7}) async {
+    final res = await _dio.get('/sellers/analytics', queryParameters: {'days': days});
+    return Map<String,dynamic>.from(res.data);
+  }
+
 }

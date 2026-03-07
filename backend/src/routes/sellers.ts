@@ -112,3 +112,62 @@ router.post('/verification', authenticate, upload.fields([
 
   res.json({ ok: true, message: 'Документы приняты, ожидайте проверки' });
 });
+
+// GET /v1/sellers/analytics?days=7
+router.get('/analytics', authenticate, requireSeller, async (req, res) => {
+  const days = Math.min(parseInt(String(req.query.days ?? '7')), 90);
+  const since = new Date(Date.now() - days * 24 * 3600 * 1000);
+
+  // Get seller record
+  const [seller] = await db.select().from(sellers)
+    .where(eq(sellers.userId, req.user!.userId)).limit(1);
+  if (!seller) throw new AppError(404, 'Seller not found');
+
+  // Revenue and orders
+  const sellerOrders = await db.select({
+    id:          orders.id,
+    totalTiyin:  orders.totalTiyin,
+    status:      orders.status,
+    createdAt:   orders.createdAt,
+  }).from(orders)
+    .where(and(eq(orders.sellerId, seller.id), gte(orders.createdAt, since)));
+
+  const doneOrders = sellerOrders.filter(o => o.status === 'done' || o.status === 'confirmed');
+  const revenue = doneOrders.reduce((sum, o) => sum + Number(o.totalTiyin), 0);
+
+  // Group by day for chart
+  const chart: Record<number, { revenue: number; orders: number }> = {};
+  for (let i = 0; i < days; i++) chart[i] = { revenue: 0, orders: 0 };
+
+  for (const order of doneOrders) {
+    const dayIdx = Math.floor((order.createdAt!.getTime() - since.getTime()) / (24 * 3600 * 1000));
+    if (chart[dayIdx]) {
+      chart[dayIdx].revenue += Number(order.totalTiyin);
+      chart[dayIdx].orders  += 1;
+    }
+  }
+
+  // Top products
+  const topProducts = await db.execute(sql`
+    SELECT p.title, COUNT(oi.id) as orders, SUM(oi.price_tiyin * oi.quantity) as revenue
+    FROM order_items oi
+    JOIN products p ON oi.product_id = p.id
+    WHERE p.seller_id = ${seller.id}
+      AND oi.created_at >= ${since}
+    GROUP BY p.id, p.title
+    ORDER BY orders DESC
+    LIMIT 5
+  `).catch(() => ({ rows: [] }));
+
+  res.json({
+    revenue,
+    revenueGrowth: 0,
+    orders:        sellerOrders.length,
+    ordersGrowth:  0,
+    views:         seller.totalViews ?? 0,
+    viewsGrowth:   0,
+    conversion:    sellerOrders.length > 0 ? (doneOrders.length / sellerOrders.length * 100) : 0,
+    chart:         Object.entries(chart).map(([day, v]) => ({ day: parseInt(day), ...v })),
+    topProducts:   (topProducts as any).rows ?? [],
+  });
+});
