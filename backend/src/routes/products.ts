@@ -137,3 +137,78 @@ router.delete('/:id', authenticate, requireSeller, async (req, res) => {
 });
 
 export default router;
+
+// POST /v1/products/:id/photos — attach photos to product
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { productPhotos } from '../db/schema';
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR || '/opt/gogomarket-Cloude/uploads';
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+const photoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_, __, cb) => cb(null, UPLOAD_DIR),
+    filename: (_, file, cb) => {
+      const ext  = path.extname(file.originalname).toLowerCase();
+      const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+      cb(null, name);
+    },
+  }),
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  fileFilter: (_, file, cb) => {
+    const ok = ['image/jpeg','image/png','image/webp'].includes(file.mimetype);
+    cb(null, ok);
+  },
+});
+
+router.post('/:id/photos', authenticate, requireSeller, photoUpload.array('photos', 10), async (req, res) => {
+  const files = req.files as Express.Multer.File[];
+  if (!files?.length) throw new AppError(400, 'No photos uploaded');
+
+  const [existing] = await db.select().from(products)
+    .where(and(eq(products.id, String(req.params.id)), isNull(products.deletedAt))).limit(1);
+  if (!existing) throw new AppError(404, 'Product not found');
+
+  const [seller] = await db.select().from(sellers)
+    .where(eq(sellers.userId, req.user!.userId)).limit(1);
+  if (!seller || existing.sellerId !== seller.id) throw new AppError(403, 'Not your product');
+
+  const baseUrl = process.env.CDN_URL || 'http://206.189.12.56';
+
+  // Get current max order
+  const existingPhotos = await db.select().from(productPhotos)
+    .where(eq(productPhotos.productId, existing.id));
+  let order = existingPhotos.length;
+
+  const inserted = await Promise.all(files.map(file =>
+    db.insert(productPhotos).values({
+      productId: existing.id,
+      url:       `${baseUrl}/uploads/${file.filename}`,
+      isCover:   order === 0,
+      order:     order++,
+    }).returning()
+  ));
+
+  res.status(201).json({ photos: inserted.map(r => r[0]) });
+});
+
+// DELETE /v1/products/:id/photos/:photoId
+router.delete('/:id/photos/:photoId', authenticate, requireSeller, async (req, res) => {
+  const [photo] = await db.select().from(productPhotos)
+    .where(eq(productPhotos.id, String(req.params.photoId))).limit(1);
+  if (!photo) throw new AppError(404, 'Photo not found');
+
+  // Delete file from disk
+  const filename = photo.url.split('/uploads/').pop();
+  if (filename) {
+    const filepath = path.join(UPLOAD_DIR, filename);
+    if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+  }
+
+  await db.delete(productPhotos).where(eq(productPhotos.id, photo.id));
+  res.json({ message: 'Photo deleted' });
+});
+
+export default router;

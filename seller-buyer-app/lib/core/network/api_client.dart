@@ -38,17 +38,26 @@ class ApiClient {
   // ── Feed ──────────────────────────────────────────────────────────────────
   Future<PaginatedResponse<ProductModel>> getFeed({
     String mode = 'discover', int page = 1, int limit = 20, String? categoryId,
+    int cursor = 0,
   }) async {
     final res = await _dio.get('/feed', queryParameters: {
-      'mode': mode, 'page': page, 'limit': limit,
+      'cursor': cursor, 'limit': limit,
       if (categoryId != null) 'cat': categoryId,
     });
     final data = Map<String, dynamic>.from(res.data);
+    final rawItems = data['items'] as List? ?? [];
+    // Filter only product-type items for now (skip reels in product list)
+    final productItems = rawItems
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .where((e) => e['type'] == 'product' || e['type'] == null)
+        .map((e) => ProductModel.fromJson(e))
+        .toList();
     return PaginatedResponse<ProductModel>(
-      items: (data['items'] as List).map((e) => ProductModel.fromJson(Map<String, dynamic>.from(e))).toList(),
-      total: data['total'] as int,
-      page:  data['page']  as int,
-      limit: data['limit'] as int,
+      items:   productItems,
+      total:   data['total'] as int? ?? productItems.length,
+      page:    page,
+      limit:   limit,
+      hasMore: data['nextCursor'] != null,
     );
   }
 

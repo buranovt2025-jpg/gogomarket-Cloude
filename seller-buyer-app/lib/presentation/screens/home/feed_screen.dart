@@ -20,9 +20,10 @@ class _FeedItem {
   final bool isVideo;
   final Color color;
   final String emoji;
+  final String? realPhotoUrl;
   const _FeedItem({required this.id, required this.title, required this.seller,
     required this.price, required this.views, required this.isVideo,
-    required this.color, required this.emoji});
+    required this.color, required this.emoji, this.realPhotoUrl});
 }
 
 final _mockItems = [
@@ -164,11 +165,12 @@ class _FeedBodyState extends State<_FeedBody> {
 
               if (state is FeedLoaded && state.products.isNotEmpty) {
                 // Insert real products as non-video items at the top
-                final realItems = state.products.take(6).map((p) => _FeedItem(
+                final realItems = state.products.take(9).map((p) => _FeedItem(
                   id: p.id, title: p.title, seller: p.sellerName ?? 'Продавец',
                   price: FormatUtils.priceTiyin(p.priceTiyin),
                   views: _fmtV(p.viewCount), isVideo: false,
                   color: const Color(0xFF1A1A1A), emoji: '🛍️',
+                  realPhotoUrl: p.firstPhoto,
                 )).toList();
                 // Interleave: real item every 3 mock items
                 final merged = <_FeedItem>[];
