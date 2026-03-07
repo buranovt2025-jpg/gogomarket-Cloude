@@ -152,4 +152,22 @@ class ApiClient {
     final res = await _dio.post('/upload/image', data: formData);
     return res.data['url'] as String;
   }
+
+  // ── Payments ──────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> initiatePayment({
+    required String orderId,
+    required String provider,
+  }) async {
+    final res = await _dio.post('/payments/initiate', data: {
+      'orderId': orderId,
+      'provider': provider,
+    });
+    return Map<String, dynamic>.from(res.data);
+  }
+
+  Future<String> getPaymentStatus(String orderId) async {
+    final res = await _dio.get('/payments/status/$orderId');
+    return res.data['status'] as String? ?? 'unknown';
+  }
+
 }

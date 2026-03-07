@@ -15,6 +15,7 @@ import '../../presentation/screens/home/reels_screen.dart';
 import '../../presentation/screens/search/search_screen.dart';
 import '../../presentation/screens/product/product_detail_screen.dart';
 import '../../presentation/screens/cart/cart_screen.dart';
+import '../../presentation/screens/payment/payment_screen.dart';
 import '../../presentation/screens/orders/orders_screen.dart';
 import '../../presentation/screens/orders/order_detail_screen.dart';
 import '../../presentation/screens/orders/tracking_screen.dart';
@@ -49,6 +50,7 @@ class Routes {
   static String productDetail(String id) => '/product/$id';
   static const String _productDetail     = '/product/:id';
 
+  static const String payment = '/payment';
   static const String cart          = '/cart';
 
   static const String orders        = '/orders';
@@ -107,6 +109,10 @@ class AppRouter {
 
       GoRoute(path: Routes.search,          builder: (_, __) => const SearchScreen()),
       GoRoute(path: Routes._productDetail,  builder: (_, s)  => ProductDetailScreen(productId: s.pathParameters['id']!)),
+      GoRoute(path: Routes.payment, builder: (_, s) => PaymentScreen(
+          orderId: s.uri.queryParameters['orderId'] ?? '',
+          amountTiyin: int.tryParse(s.uri.queryParameters['amount'] ?? '0') ?? 0,
+        )),
       GoRoute(path: Routes.cart,            builder: (_, __) => const CartScreen()),
       GoRoute(path: Routes.orders,          builder: (_, __) => const OrdersScreen()),
       GoRoute(path: Routes._orderDetail,    builder: (_, s)  => OrderDetailScreen(orderId: s.pathParameters['id']!)),
