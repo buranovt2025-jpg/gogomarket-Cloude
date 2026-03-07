@@ -191,10 +191,10 @@ class _Btn extends StatelessWidget {
   @override Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: Column(children: [
-      Icon(icon, color: color, size: 28.sp, shadows: const [Shadow(color: Colors.black.withOpacity(0.54), blurRadius: 8)]),
+      Icon(icon, color: color, size: 28.sp, shadows: [Shadow(color: Colors.black.withOpacity(0.54), blurRadius: 8)]),
       SizedBox(height: 2.h),
       Text(label, style: TextStyle(color: Colors.white, fontSize: 11.sp,
-        shadows: const [Shadow(color: Colors.black.withOpacity(0.54), blurRadius: 4)])),
+        shadows: [Shadow(color: Colors.black.withOpacity(0.54), blurRadius: 4)])),
     ]),
   );
 }

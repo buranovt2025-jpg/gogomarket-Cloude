@@ -30,6 +30,15 @@ class FormatUtils {
   }
 
   /// DateTime → "14 мар"
+
+  static String timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1)  return 'только что';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} мин';
+    if (diff.inHours < 24)   return '${diff.inHours} ч';
+    if (diff.inDays < 7)     return '${diff.inDays} дн';
+    return dateShort(dt);
+  }
   static String dateShort(DateTime dt) {
     const months = ['янв','фев','мар','апр','май','июн',
                     'июл','авг','сен','окт','ноя','дек'];
