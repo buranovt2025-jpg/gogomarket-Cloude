@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db';
-import { sellers, products, reels } from '../db/schema';
+import { sellers, products, reels, orders, orderItems, users, notifications } from '../db/schema';
 import { authenticate, requireSeller } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
-import { eq, and, desc } from 'drizzle-orm';
+import multer from 'multer';
+const upload = multer({ dest: 'uploads/verification/' });
+import { eq, and, desc, gte, sql } from 'drizzle-orm';
 
 const router = Router();
 

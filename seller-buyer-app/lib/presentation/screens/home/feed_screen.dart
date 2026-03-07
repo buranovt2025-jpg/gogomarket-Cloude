@@ -95,44 +95,8 @@ class _FeedBodyState extends State<_FeedBody> {
               IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white), onPressed: () {}),
             ]),
             bottom: PreferredSize(
-              preferredSize: Size.fromHeight(80.h),
+              preferredSize: Size.fromHeight(36.h),
               child: Column(children: [
-                // Stories
-                SizedBox(height: 44.h,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                    itemCount: 9,
-                    itemBuilder: (_, i) {
-                      final stories = [
-                        ['➕','Мой'], ['👗','Aisha'], ['💄','Kamola'], ['📱','TechZone'],
-                        ['🏋️','Sport'], ['🕯️','Home'], ['👟','Sneaker'], ['✨','Beauty'], ['🔥','Новинки'],
-                      ];
-                      final s = stories[i];
-                      final isAdd = i == 0;
-                      return GestureDetector(
-                        onTap: () {},
-                        child: Container(
-                          margin: EdgeInsets.only(right: 8.w),
-                          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                            Container(
-                              width: 34.w, height: 34.w,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: isAdd ? null : const LinearGradient(
-                                  colors: [AppColors.accent, Color(0xFFFF6B35)],
-                                ),
-                                color: isAdd ? const Color(0xFF222222) : null,
-                                border: isAdd ? Border.all(color: const Color(0xFF444444), width: 1.5) : null,
-                              ),
-                              child: Center(child: Text(s[0], style: TextStyle(fontSize: 16.sp))),
-                            ),
-                          ]),
-                        ),
-                      );
-                    },
-                  ),
-                ),
                 // Categories
                 SizedBox(height: 36.h,
                   child: ListView.builder(

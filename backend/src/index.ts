@@ -48,18 +48,18 @@ app.get('/health', (_, res) => res.json({
 }));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
-app.use('/auth',          authRouter);
-app.use('/feed',          feedRouter);
-app.use('/products',      productsRouter);
-app.use('/orders',        ordersRouter);
-app.use('/chats',         chatsRouter);
-app.use('/sellers',       sellersRouter);
-app.use('/delivery',      deliveryRouter);
-app.use('/notifications', notificationsRouter);
-app.use('/admin',         adminRouter);
-app.use('/upload',        uploadRouter);
-app.use('/payments',      paymentsRouter);
-app.use('/push',          pushRouter);
+app.use('/api/auth',          authRouter);
+app.use('/api/feed',          feedRouter);
+app.use('/api/products',      productsRouter);
+app.use('/api/orders',        ordersRouter);
+app.use('/api/chats',         chatsRouter);
+app.use('/api/sellers',       sellersRouter);
+app.use('/api/delivery',      deliveryRouter);
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/admin',         adminRouter);
+app.use('/api/upload',        uploadRouter);
+app.use('/api/payments',      paymentsRouter);
+app.use('/api/push',          pushRouter);
 
 // ── Socket.io ────────────────────────────────────────────────────────────────
 initSocket(server);

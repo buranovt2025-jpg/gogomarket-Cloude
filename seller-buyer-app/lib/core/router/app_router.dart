@@ -65,8 +65,8 @@ class Routes {
   static String chat(String id)         => '/chats/$id';
   static const String _chat             = '/chats/:id';
 
-  static String storefront(String id)   => '/seller/$id';
-  static const String _storefront       = '/seller/:id';
+  static String storefront(String id)   => '/store/$id';
+  static const String _storefront       = '/store/:id';
 
   static const String profile       = '/profile';
   static const String settings      = '/settings';
