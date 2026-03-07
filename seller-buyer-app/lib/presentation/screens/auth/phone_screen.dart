@@ -184,7 +184,7 @@ class _PhoneBodyState extends State<_PhoneBody> {
                         border: Border.all(
                           color: _focus.hasFocus
                             ? AppColors.accent
-                            : (isDark ? Colors.white10 : Colors.black.withOpacity(0.08)),
+                            : (isDark ? Colors.white.withOpacity(0.10) : Colors.black.withOpacity(0.08)),
                           width: _focus.hasFocus ? 1.5 : 1,
                         ),
                         boxShadow: _focus.hasFocus ? [

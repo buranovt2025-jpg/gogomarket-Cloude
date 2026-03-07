@@ -8,10 +8,6 @@ on:
       - '.github/workflows/flutter-seller-buyer.yml'
   workflow_dispatch:
 
-env:
-  TG_BOT_TOKEN: "8786274351:AAHXhlhzvIj8_xPQzE0e6bVBdMUlE-1dxq4"
-  TG_CHAT_ID: "906884"
-
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -30,47 +26,51 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Flutter pub get
+      - name: Flutter version check
+        run: flutter --version
+
+      - name: Pub get
         working-directory: seller-buyer-app
         run: flutter pub get
 
-      - name: Flutter analyze
+      - name: Analyze
         working-directory: seller-buyer-app
-        run: flutter analyze --no-fatal-infos 2>&1 | tail -50
+        run: flutter analyze --no-fatal-infos
         continue-on-error: true
 
       - name: Build APK
-        id: build
         working-directory: seller-buyer-app
-        run: |
-          flutter build apk --release --no-tree-shake-icons 2>&1 | tee /tmp/build_log.txt
-          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Upload APK artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gogomarket-apk
+          path: seller-buyer-app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
 
       - name: Send APK to Telegram
         if: success()
+        env:
+          TG_BOT_TOKEN: "8786274351:AAHXhlhzvIj8_xPQzE0e6bVBdMUlE-1dxq4"
+          TG_CHAT_ID: "906884"
         run: |
-          APK=$(find seller-buyer-app/build -name "app-release.apk" | head -1)
-          SIZE=$(du -sh "$APK" | cut -f1)
+          APK=seller-buyer-app/build/app/outputs/flutter-apk/app-release.apk
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          CAPTION="✅ GogoMarket APK готов!
-Размер: ${SIZE} | ${SHORT_SHA}"
           curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument" \
             -F "chat_id=${TG_CHAT_ID}" \
             -F "document=@${APK}" \
-            -F "caption=${CAPTION}"
+            -F "caption=✅ GogoMarket APK готов! ${SHORT_SHA}"
 
-      - name: Send error to Telegram
+      - name: Send error to Telegram  
         if: failure()
+        env:
+          TG_BOT_TOKEN: "8786274351:AAHXhlhzvIj8_xPQzE0e6bVBdMUlE-1dxq4"
+          TG_CHAT_ID: "906884"
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          # Берём последние 50 строк лога с ошибкой
-          ERROR=$(tail -60 /tmp/build_log.txt 2>/dev/null | grep -E "error:|Error|FAILED|Exception|✗" | head -20 || echo "см. логи GitHub Actions")
-          MSG="❌ Сборка упала! ${SHORT_SHA}
-
-🔴 Ошибка:
-${ERROR}
-
-🔗 https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
             -d "chat_id=${TG_CHAT_ID}" \
-            --data-urlencode "text=${MSG}"
+            -d "text=❌ Сборка провалилась! ${SHORT_SHA}%0A${URL}"

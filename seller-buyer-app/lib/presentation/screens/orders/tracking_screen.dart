@@ -120,7 +120,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             decoration: const BoxDecoration(
               color: AppColors.bgCard,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 20)],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.45), blurRadius: 20)],
             ),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               // ETA bar

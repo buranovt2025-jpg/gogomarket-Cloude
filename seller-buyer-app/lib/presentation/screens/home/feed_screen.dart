@@ -315,7 +315,7 @@ class _StoryItem extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isDark ? Colors.white.withOpacity(0.24) : Colors.black15,
+                      color: isDark ? Colors.white.withOpacity(0.24) : Colors.black.withOpacity(0.15),
                       width: 2,
                     ),
                   ),
