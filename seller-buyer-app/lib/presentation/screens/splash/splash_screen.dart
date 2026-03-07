@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
@@ -13,96 +12,73 @@ class SplashScreen extends StatefulWidget {
   @override State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _anim;
-  late Animation<double> _fade;
-  late Animation<double> _scale;
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scaleAnim;
+  late Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
-    _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
-    _fade  = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _anim, curve: Curves.easeIn));
-    _scale = Tween<double>(begin: 0.8, end: 1).animate(CurvedAnimation(parent: _anim, curve: Curves.elasticOut));
-    _anim.forward();
-    _navigate();
+
+    // Полноэкранный режим на время сплэша
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+
+    _scaleAnim = Tween<double>(begin: 0.7, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack)),
+    );
+    _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: const Interval(0.0, 0.5, curve: Curves.easeIn)),
+    );
+
+    _ctrl.forward();
   }
 
   @override
-  void dispose() { _anim.dispose(); super.dispose(); }
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _ctrl.dispose();
+    super.dispose();
+  }
 
-  Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 1800));
-    if (!mounted) return;
-
-    final authState = context.read<AuthBloc>().state;
-
-    if (authState is AuthAuthenticated) {
-      if (authState.user.isSeller) {
+  void _navigate(BuildContext context, AuthState state) {
+    Future.delayed(const Duration(milliseconds: 1600), () {
+      if (!mounted) return;
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      if (state is AuthAuthenticated) {
         context.go(Routes.feed);
       } else {
-        context.go(Routes.feed);
+        context.go(Routes.onboarding);
       }
-      return;
-    }
-
-    // Check onboarding
-    final prefs = await SharedPreferences.getInstance();
-    final done  = prefs.getBool('onboarding_done') ?? false;
-    if (mounted) context.go(done ? Routes.phone : Routes.onboarding);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgDark,
-      body: BlocListener<AuthBloc, AuthState>(
-        listener: (ctx, state) {
-          // Navigation handled in _navigate()
-        },
-        child: Center(
-          child: FadeTransition(
-            opacity: _fade,
-            child: ScaleTransition(
-              scale: _scale,
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                // Logo
-                Container(
-                  width: 96.w, height: 96.w,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.accent, AppColors.accent2],
-                      begin: Alignment.topLeft, end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(color: AppColors.accent.withOpacity(0.4), blurRadius: 32, spreadRadius: 4),
-                    ],
-                  ),
-                  child: Center(child: Text('G', style: TextStyle(
-                    color: Colors.white, fontSize: 48.sp,
-                    fontWeight: FontWeight.w700, fontFamily: 'Playfair',
-                  ))),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated || state is AuthUnauthenticated) {
+          _navigate(context, state);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.accent,
+        body: Center(
+          child: AnimatedBuilder(
+            animation: _ctrl,
+            builder: (_, __) => FadeTransition(
+              opacity: _fadeAnim,
+              child: ScaleTransition(
+                scale: _scaleAnim,
+                child: Image.asset(
+                  'assets/images/splash_orange.png',
+                  width: 280,
+                  fit: BoxFit.contain,
                 ),
-                SizedBox(height: 20.h),
-                Text('GogoMarket', style: TextStyle(
-                  fontFamily: 'Playfair', fontSize: 32.sp,
-                  fontWeight: FontWeight.w700, color: AppColors.textPrimary,
-                  letterSpacing: -0.5,
-                )),
-                SizedBox(height: 6.h),
-                Text('Социальная торговля', style: TextStyle(
-                  color: AppColors.textMuted, fontSize: 14.sp,
-                )),
-                SizedBox(height: 48.h),
-                SizedBox(
-                  width: 24, height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.accent.withOpacity(0.6),
-                  ),
-                ),
-              ]),
+              ),
             ),
           ),
         ),

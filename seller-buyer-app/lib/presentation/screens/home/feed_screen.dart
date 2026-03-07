@@ -79,10 +79,17 @@ class _FeedBodyState extends State<_FeedBody> {
             backgroundColor: Theme.of(context).scaffoldBackgroundColor, elevation: 0,
             titleSpacing: 14.w,
             title: Row(children: [
-              RichText(text: TextSpan(children: [
-                TextSpan(text: 'Gogo', style: TextStyle(color: AppColors.accent, fontSize: 22.sp, fontWeight: FontWeight.w800)),
-                TextSpan(text: 'Market', style: TextStyle(color: Colors.white, fontSize: 22.sp, fontWeight: FontWeight.w800)),
-              ])),
+              // Logo - меняется в зависимости от темы
+              Builder(builder: (ctx) {
+                final isDark = Theme.of(ctx).brightness == Brightness.dark;
+                return Image.asset(
+                  isDark
+                    ? 'assets/images/logo_horizontal_light.png'
+                    : 'assets/images/logo_horizontal_dark.png',
+                  height: 26.h,
+                  fit: BoxFit.contain,
+                );
+              }),
               const Spacer(),
               IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () => context.push(Routes.search)),
               IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white), onPressed: () {}),
