@@ -170,4 +170,11 @@ class ApiClient {
     return res.data['status'] as String? ?? 'unknown';
   }
 
+
+  // ── Chats ─────────────────────────────────────────────────────────────────
+  Future<List<dynamic>> getChatMessages(String chatId, {int limit = 50}) async {
+    final res = await _dio.get('/chats/$chatId/messages', queryParameters: {'limit': limit});
+    return res.data['items'] as List? ?? [];
+  }
+
 }

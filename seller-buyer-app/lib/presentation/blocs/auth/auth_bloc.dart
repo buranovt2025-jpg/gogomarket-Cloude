@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/socket_service.dart';
 import '../../../core/network/api_client.dart';
 import '../../../data/models/user/user_model.dart';
 
@@ -58,6 +59,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await userBox.put(AppConstants.userKey, res['user']);
 
       final user = UserModel.fromJson(Map<String, dynamic>.from(res['user']));
+      // Connect socket on login
+      final accessToken = res['accessToken'] as String;
+      SocketService.instance.connect(accessToken);
       emit(AuthAuthenticated(user: user));
     } catch (err) {
       emit(AuthError(message: _parseError(err)));
@@ -67,6 +71,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onLogout(AuthLogoutEvent e, Emitter<AuthState> emit) async {
     final tokenBox = Hive.box(AppConstants.tokenBox);
     final userBox  = Hive.box(AppConstants.userBox);
+    SocketService.instance.disconnect();
     await tokenBox.clear();
     await userBox.clear();
     emit(AuthUnauthenticated());

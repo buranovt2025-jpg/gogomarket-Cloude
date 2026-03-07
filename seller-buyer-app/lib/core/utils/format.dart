@@ -25,4 +25,12 @@ class FormatUtils {
     if (diff.inDays    < 7)  return '${diff.inDays} д назад';
     return DateFormat('d MMM', 'ru').format(dt);
   }
+
+  static String timeShort(DateTime dt) {
+    final now = DateTime.now();
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    if (dt.day == now.day) return '$h:$m';
+    return '${dt.day}.${dt.month.toString().padLeft(2, '0')}';
+  }
 }
