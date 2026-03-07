@@ -1,36 +1,55 @@
-import 'package:intl/intl.dart';
-
 class FormatUtils {
   FormatUtils._();
 
-  static final _fmt = NumberFormat('#,###', 'ru_RU');
-
-  static String price(int sumValue)      => '${_fmt.format(sumValue)} сум';
-  static String priceTiyin(int tiyin)    => price(tiyin ~/ 100);
-  static String priceShort(int sumValue) {
-    if (sumValue >= 1000000) return '${(sumValue / 1000000).toStringAsFixed(1)} млн';
-    if (sumValue >= 1000)    return '${(sumValue / 1000).round()} К';
-    return '$sumValue';
-  }
-  static String phone(String p) {
-    final d = p.replaceAll(RegExp(r'\D'), '');
-    if (d.length >= 12) return '+${d.substring(0,3)} ${d.substring(3,5)} ${d.substring(5,8)} ${d.substring(8,10)} ${d.substring(10,12)}';
-    return p;
-  }
-  static String timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1)  return 'только что';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} мин назад';
-    if (diff.inHours   < 24) return '${diff.inHours} ч назад';
-    if (diff.inDays    < 7)  return '${diff.inDays} д назад';
-    return DateFormat('d MMM', 'ru').format(dt);
+  /// 18500000 tiyins → "185 000 сум"
+  static String priceTiyin(int tiyin) {
+    final uzs = tiyin ~/ 100;
+    final formatted = uzs.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]} ',
+    );
+    return '$formatted сум';
   }
 
+  /// 18500000 tiyins → "185 000"
+  static String priceNumber(int tiyin) {
+    final uzs = tiyin ~/ 100;
+    return uzs.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]} ',
+    );
+  }
+
+  /// DateTime → "14:35"  or  "14 мар"
   static String timeShort(DateTime dt) {
     final now = DateTime.now();
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
-    if (dt.day == now.day) return '$h:$m';
-    return '${dt.day}.${dt.month.toString().padLeft(2, '0')}';
+    if (dt.day == now.day && dt.month == now.month) return '$h:$m';
+    return dateShort(dt);
+  }
+
+  /// DateTime → "14 мар"
+  static String dateShort(DateTime dt) {
+    const months = ['янв','фев','мар','апр','май','июн',
+                    'июл','авг','сен','окт','ноя','дек'];
+    return '${dt.day} ${months[dt.month - 1]}';
+  }
+
+  /// DateTime → "14.03.2025"
+  static String dateFull(DateTime dt) {
+    final d = dt.day.toString().padLeft(2, '0');
+    final mo = dt.month.toString().padLeft(2, '0');
+    return '$d.$mo.${dt.year}';
+  }
+
+  /// Phone format: +998 90 123-45-67
+  static String phone(String raw) {
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.length == 12) {
+      return '+${digits.substring(0,3)} ${digits.substring(3,5)} '
+             '${digits.substring(5,8)}-${digits.substring(8,10)}-${digits.substring(10)}';
+    }
+    return raw;
   }
 }

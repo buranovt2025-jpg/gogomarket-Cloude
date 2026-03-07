@@ -70,3 +70,45 @@ router.post('/register', authenticate, async (req, res) => {
 });
 
 export default router;
+
+// POST /v1/sellers/verification — подача документов на верификацию
+router.post('/verification', authenticate, upload.fields([
+  { name: 'passportFront', maxCount: 1 },
+  { name: 'passportBack',  maxCount: 1 },
+  { name: 'selfie',        maxCount: 1 },
+]), async (req, res) => {
+  const { inn, fullName } = z.object({
+    inn:      z.string().min(9).max(9),
+    fullName: z.string().min(5),
+  }).parse(req.body);
+
+  const files = req.files as Record<string, Express.Multer.File[]>;
+
+  // Save to seller record
+  await db.update(sellers).set({
+    inn,
+    verificationStatus: 'pending',
+    verificationMeta: {
+      fullName,
+      passportFront: files.passportFront?.[0]?.filename,
+      passportBack:  files.passportBack?.[0]?.filename,
+      selfie:        files.selfie?.[0]?.filename,
+      submittedAt:   new Date().toISOString(),
+    },
+    updatedAt: new Date(),
+  } as any).where(eq(sellers.userId, req.user!.userId));
+
+  // Notify admins
+  const adminUsers = await db.select().from(users).where(eq(users.role, 'admin')).limit(5);
+  for (const admin of adminUsers) {
+    await db.insert(notifications).values({
+      userId:  admin.id,
+      type:    'system',
+      title:   'Новая заявка на верификацию',
+      body:    `${fullName} (ИНН: ${inn}) подал документы`,
+      data:    { sellerId: req.user!.userId },
+    } as any).catch(() => {});
+  }
+
+  res.json({ ok: true, message: 'Документы приняты, ожидайте проверки' });
+});

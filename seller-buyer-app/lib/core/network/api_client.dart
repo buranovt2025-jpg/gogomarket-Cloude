@@ -181,4 +181,34 @@ class ApiClient {
   Future<void> saveFcmToken(String token) async {
     await _dio.post('/push/token', data: {'token': token});
   }
+
+  // ── Verification ──────────────────────────────────────────────────────────
+  Future<void> submitVerification({
+    required String inn,
+    required String fullName,
+    required dynamic passportFront,
+    required dynamic passportBack,
+    required dynamic selfie,
+  }) async {
+    final formData = FormData.fromMap({
+      'inn':      inn,
+      'fullName': fullName,
+      'passportFront': await MultipartFile.fromFile(passportFront.path, filename: 'passport_front.jpg'),
+      'passportBack':  await MultipartFile.fromFile(passportBack.path,  filename: 'passport_back.jpg'),
+      'selfie':        await MultipartFile.fromFile(selfie.path,         filename: 'selfie.jpg'),
+    });
+    await _dio.post('/sellers/verification', data: formData);
+  }
+
+
+  Future<List<dynamic>> getMyOrders() async {
+    final res = await _dio.get('/orders');
+    return res.data['items'] as List? ?? [];
+  }
+
+  Future<Map<String,dynamic>> getOrderDetail(String orderId) async {
+    final res = await _dio.get('/orders/$orderId');
+    return Map<String,dynamic>.from(res.data);
+  }
+
 }
