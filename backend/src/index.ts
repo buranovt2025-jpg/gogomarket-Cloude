@@ -15,6 +15,7 @@ import authRouter         from './routes/auth';
 import feedRouter         from './routes/feed';
 import productsRouter     from './routes/products';
 import ordersRouter       from './routes/orders';
+import pushRouter        from './routes/push';
 import paymentsRouter     from './routes/payments';
 import chatsRouter        from './routes/chats';
 import sellersRouter      from './routes/sellers';
@@ -58,6 +59,7 @@ app.use('/notifications', notificationsRouter);
 app.use('/admin',         adminRouter);
 app.use('/upload',        uploadRouter);
 app.use('/payments',      paymentsRouter);
+app.use('/push',          pushRouter);
 
 // ── Socket.io ────────────────────────────────────────────────────────────────
 initSocket(server);

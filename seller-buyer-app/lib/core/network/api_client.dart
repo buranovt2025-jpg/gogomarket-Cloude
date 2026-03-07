@@ -177,4 +177,8 @@ class ApiClient {
     return res.data['items'] as List? ?? [];
   }
 
+
+  Future<void> saveFcmToken(String token) async {
+    await _dio.post('/push/token', data: {'token': token});
+  }
 }
