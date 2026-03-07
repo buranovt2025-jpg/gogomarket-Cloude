@@ -26,51 +26,58 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Flutter version check
-        run: flutter --version
-
-      - name: Pub get
+      - name: Flutter pub get
         working-directory: seller-buyer-app
-        run: flutter pub get
+        run: flutter pub get 2>&1 | tee /tmp/pubget.log
 
-      - name: Analyze
+      - name: Flutter analyze
         working-directory: seller-buyer-app
-        run: flutter analyze --no-fatal-infos
+        run: flutter analyze --no-fatal-infos 2>&1 | tee /tmp/analyze.log
         continue-on-error: true
 
       - name: Build APK
         working-directory: seller-buyer-app
-        run: flutter build apk --release --no-tree-shake-icons
+        run: flutter build apk --release --no-tree-shake-icons 2>&1 | tee /tmp/build.log
+        continue-on-error: true
 
-      - name: Upload APK artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gogomarket-apk
-          path: seller-buyer-app/build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 7
-
-      - name: Send APK to Telegram
-        if: success()
-        env:
-          TG_BOT_TOKEN: "8786274351:AAHXhlhzvIj8_xPQzE0e6bVBdMUlE-1dxq4"
-          TG_CHAT_ID: "906884"
-        run: |
-          APK=seller-buyer-app/build/app/outputs/flutter-apk/app-release.apk
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument" \
-            -F "chat_id=${TG_CHAT_ID}" \
-            -F "document=@${APK}" \
-            -F "caption=✅ GogoMarket APK готов! ${SHORT_SHA}"
-
-      - name: Send error to Telegram  
-        if: failure()
+      - name: Check result and notify
         env:
           TG_BOT_TOKEN: "8786274351:AAHXhlhzvIj8_xPQzE0e6bVBdMUlE-1dxq4"
           TG_CHAT_ID: "906884"
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${TG_CHAT_ID}" \
-            -d "text=❌ Сборка провалилась! ${SHORT_SHA}%0A${URL}"
+          APK=$(find seller-buyer-app/build -name "app-release.apk" 2>/dev/null | head -1)
+          
+          if [ -n "$APK" ] && [ -f "$APK" ]; then
+            # SUCCESS - send APK
+            SIZE=$(du -sh "$APK" | cut -f1)
+            curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument" \
+              -F "chat_id=${TG_CHAT_ID}" \
+              -F "document=@${APK}" \
+              -F "caption=✅ APK готов! ${SHORT_SHA} | ${SIZE}"
+          else
+            # FAILURE - collect and send logs
+            echo "=== BUILD LOG ===" > /tmp/full_error.txt
+            grep -E "error:|Error:|FAILED|Exception|✗|cannot|Could not|Unresolved" /tmp/build.log 2>/dev/null | head -40 >> /tmp/full_error.txt
+            echo "" >> /tmp/full_error.txt
+            echo "=== ANALYZE ===" >> /tmp/full_error.txt
+            grep -E "error •|warning •" /tmp/analyze.log 2>/dev/null | head -20 >> /tmp/full_error.txt
+            echo "" >> /tmp/full_error.txt
+            echo "=== LAST 30 LINES ===" >> /tmp/full_error.txt
+            tail -30 /tmp/build.log >> /tmp/full_error.txt
+
+            # Send as file to Telegram
+            curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument" \
+              -F "chat_id=${TG_CHAT_ID}" \
+              -F "document=@/tmp/full_error.txt" \
+              -F "caption=❌ Сборка упала ${SHORT_SHA} — смотри лог"
+            
+            # Also send short summary as message
+            SUMMARY=$(grep -E "error:|Error:|FAILED" /tmp/build.log 2>/dev/null | head -5 | tr '\n' ' ')
+            MSG="❌ ${SHORT_SHA}: ${SUMMARY}"
+            curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
+              -d "chat_id=${TG_CHAT_ID}" \
+              --data-urlencode "text=${MSG}"
+            
+            exit 1
+          fi
