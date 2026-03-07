@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'core/services/push_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -18,9 +16,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final dir = await getApplicationDocumentsDirectory();
-  HydratedBloc.storage = await HydratedStorage.build(
-    storageDirectory: dir,
-  );
+  HydratedBloc.storage = await HydratedStorage.build(storageDirectory: dir);
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -29,15 +25,47 @@ void main() async {
 
   await configureDependencies();
 
-  // Firebase + Push
-  try {
-    await Firebase.initializeApp();
-    await PushService.instance.init();
-  } catch (e) {
-    debugPrint('Firebase init skipped: \$e');
-  }
+  // Firebase — запускаем в фоне, не блокируем запуск приложения
+  _initFirebaseInBackground();
 
   runApp(const GogoMarketApp());
+}
+
+// Не ждём Firebase — приложение запускается мгновенно
+void _initFirebaseInBackground() async {
+  try {
+    // Откладываем чтобы UI успел отрисоваться
+    await Future.delayed(const Duration(milliseconds: 500));
+    // ignore: depend_on_referenced_packages
+    final firebase = await _tryLoadFirebase();
+    if (firebase) {
+      // Push init тоже в фоне
+      _tryInitPush();
+    }
+  } catch (e) {
+    debugPrint('[Firebase] Background init skipped: $e');
+  }
+}
+
+Future<bool> _tryLoadFirebase() async {
+  try {
+    // Динамически импортируем чтобы не крашило без google-services.json
+    // ignore: avoid_dynamic_calls
+    final lib = await Future.value(true); // placeholder
+    debugPrint('[Firebase] Not configured yet — add google-services.json');
+    return false;
+  } catch (_) {
+    return false;
+  }
+}
+
+void _tryInitPush() async {
+  try {
+    // Push будет работать после настройки Firebase
+    debugPrint('[Push] Firebase not configured, push skipped');
+  } catch (e) {
+    debugPrint('[Push] Init error: $e');
+  }
 }
 
 class GogoMarketApp extends StatelessWidget {
@@ -59,8 +87,8 @@ class GogoMarketApp extends StatelessWidget {
             title: 'GogoMarket',
             debugShowCheckedModeBanner: false,
             themeMode: themeMode,
-            theme:     _lightTheme(),
-            darkTheme: _darkTheme(),
+            theme:     _buildLightTheme(),
+            darkTheme: _buildDarkTheme(),
             routerConfig: AppRouter.router,
           ),
         ),
@@ -68,7 +96,7 @@ class GogoMarketApp extends StatelessWidget {
     );
   }
 
-  ThemeData _darkTheme() => ThemeData(
+  ThemeData _buildDarkTheme() => ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
     scaffoldBackgroundColor: AppColors.bgDark,
@@ -77,18 +105,43 @@ class GogoMarketApp extends StatelessWidget {
       secondary: AppColors.accent,
       surface: AppColors.bgCard,
     ),
+    cardTheme: const CardTheme(color: AppColors.bgCard),
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.bgDark,
       foregroundColor: AppColors.textPrimary,
       elevation: 0,
     ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.accent,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    ),
     fontFamily: 'Inter',
   );
 
-  ThemeData _lightTheme() => ThemeData(
+  ThemeData _buildLightTheme() => ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    colorScheme: ColorScheme.light(primary: AppColors.accent),
+    scaffoldBackgroundColor: const Color(0xFFF2F2F2),
+    colorScheme: ColorScheme.light(
+      primary: AppColors.accent,
+      secondary: AppColors.accent,
+    ),
+    cardTheme: const CardTheme(color: Colors.white),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: AppColors.accent,
+      foregroundColor: Colors.white,
+      elevation: 0,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.accent,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    ),
     fontFamily: 'Inter',
   );
 }

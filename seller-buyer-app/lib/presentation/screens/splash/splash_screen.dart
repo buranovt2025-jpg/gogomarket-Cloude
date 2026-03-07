@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,37 +18,52 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _ctrl;
   late Animation<double> _scaleAnim;
   late Animation<double> _fadeAnim;
+  Timer? _fallbackTimer;
+  bool _navigated = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Полноэкранный режим на время сплэша
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
 
-    _scaleAnim = Tween<double>(begin: 0.7, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack)),
+    _scaleAnim = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack),
     );
     _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: const Interval(0.0, 0.5, curve: Curves.easeIn)),
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeIn),
     );
 
     _ctrl.forward();
+
+    // Fallback: если AuthBloc завис — навигируем через 3 сек
+    _fallbackTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted || _navigated) return;
+      _doNavigate(context.read<AuthBloc>().state);
+    });
   }
 
   @override
   void dispose() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _ctrl.dispose();
+    _fallbackTimer?.cancel();
     super.dispose();
   }
 
-  void _navigate(BuildContext context, AuthState state) {
-    Future.delayed(const Duration(milliseconds: 1600), () {
+  void _doNavigate(AuthState state) {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    // Небольшая задержка чтобы анимация успела
+    final delay = _ctrl.isAnimating ? 400 : 0;
+    Future.delayed(Duration(milliseconds: delay), () {
       if (!mounted) return;
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       if (state is AuthAuthenticated) {
         context.go(Routes.feed);
       } else {
@@ -59,9 +75,9 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (ctx, state) {
         if (state is AuthAuthenticated || state is AuthUnauthenticated) {
-          _navigate(context, state);
+          _doNavigate(state);
         }
       },
       child: Scaffold(
@@ -73,9 +89,11 @@ class _SplashScreenState extends State<SplashScreen>
               opacity: _fadeAnim,
               child: ScaleTransition(
                 scale: _scaleAnim,
+                // Используем белый логотип на прозрачном фоне
+                // — никакого прямоугольника не будет
                 child: Image.asset(
-                  'assets/images/splash_orange.png',
-                  width: 280,
+                  'assets/images/logo_horizontal_light.png',
+                  width: 240,
                   fit: BoxFit.contain,
                 ),
               ),
