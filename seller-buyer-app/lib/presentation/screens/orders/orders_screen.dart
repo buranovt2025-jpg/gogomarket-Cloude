@@ -178,7 +178,7 @@ class _OrderCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkBgCard : Colors.white,
           borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0,2))],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0,2))],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Header

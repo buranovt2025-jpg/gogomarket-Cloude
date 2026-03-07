@@ -185,7 +185,7 @@ class _RecentOrders extends StatelessWidget {
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             _statusBadge(o['status'] as String),
             SizedBox(height: 4.h),
-            Text(FormatUtils.price(o['amount'] as int), style: TextStyle(color: AppColors.textPrimary, fontSize: 13.sp, fontWeight: FontWeight.w600)),
+            Text(FormatUtils.priceTiyin(o['amount'] as int), style: TextStyle(color: AppColors.textPrimary, fontSize: 13.sp, fontWeight: FontWeight.w600)),
           ]),
         ]),
       )),

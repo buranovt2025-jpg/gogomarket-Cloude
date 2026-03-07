@@ -175,7 +175,7 @@ class _ReelPage extends StatelessWidget {
                     style: TextStyle(color: AppColors.accent, fontSize: 13.sp, fontWeight: FontWeight.w700)),
                 ]),
                 SizedBox(width: 8.w),
-                const Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.54), size: 11),
+                Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.54), size: 11),
               ]),
             ),
           ),

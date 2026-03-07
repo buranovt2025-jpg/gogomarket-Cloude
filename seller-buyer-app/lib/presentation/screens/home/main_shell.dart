@@ -34,7 +34,7 @@ class MainShell extends StatelessWidget {
         height: 62.h,
         decoration: BoxDecoration(
           color: isDark
-              ? const Color(0xFF1C1C1C).withOpacity(0.97)
+              ? Color(0xFF1C1C1C).withOpacity(0.97)
               : Colors.white.withOpacity(0.97),
           borderRadius: BorderRadius.circular(32.r),
           boxShadow: [

@@ -249,7 +249,7 @@ class _Bubble extends StatelessWidget {
             bottomLeft:  Radius.circular(msg.isMe ? 18 : 4),
             bottomRight: Radius.circular(msg.isMe ? 4 : 18),
           ),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0,2))],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: Offset(0,2))],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Text(msg.content, style: TextStyle(
@@ -313,4 +313,3 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
       decoration: const BoxDecoration(color: AppColors.textMuted, shape: BoxShape.circle)),
   );
 }
-

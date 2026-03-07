@@ -307,7 +307,7 @@ class _MenuCard extends StatelessWidget {
                 fontSize: 14.sp, fontWeight: FontWeight.w600,
                 color: item.highlight
                   ? AppColors.accent
-                  : (isDark ? Colors.white.withOpacity(0.87) : const Color(0xFF1A1A1A)),
+                  : (isDark ? Colors.white.withOpacity(0.87) : Color(0xFF1A1A1A)),
               ))),
               Icon(Icons.chevron_right_rounded,
                 size: 18.sp,
