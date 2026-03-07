@@ -66,7 +66,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Container(margin: EdgeInsets.all(8.w),
-            decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: Colors.black.withOpacity(0.54), shape: BoxShape.circle),
             child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16)),
         ),
       ),

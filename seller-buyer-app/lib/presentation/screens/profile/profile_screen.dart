@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -12,97 +13,313 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthBloc>().state;
-    final user = auth is AuthAuthenticated ? auth.user : null;
+    final auth   = context.watch<AuthBloc>().state;
+    final user   = auth is AuthAuthenticated ? auth.user : null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isSeller = user?.isSeller == true;
 
     return Scaffold(
-      backgroundColor: AppColors.bgDark,
-      appBar: AppBar(
-        title: Text('Профиль', style: TextStyle(color: AppColors.textPrimary, fontSize: 18.sp, fontWeight: FontWeight.w700)),
-        backgroundColor: AppColors.bgDark,
-        actions: [IconButton(icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary), onPressed: () => context.push(Routes.settings))],
+      backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF2F2F2),
+      body: CustomScrollView(
+        slivers: [
+
+          // ── Hero header ───────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Container(
+              padding: EdgeInsets.fromLTRB(20.w, 60.h, 20.w, 28.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  colors: isDark
+                    ? [const Color(0xFF1A0A00), const Color(0xFF0D0D0D)]
+                    : [const Color(0xFFFFF5F0), Colors.white],
+                ),
+              ),
+              child: Column(children: [
+                // Settings + edit row
+                Row(children: [
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => context.push(Routes.settings),
+                    child: Container(
+                      width: 36.w, height: 36.w,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Icon(Icons.settings_outlined,
+                        size: 18.sp,
+                        color: isDark ? Colors.white.withOpacity(0.60) : Colors.black.withOpacity(0.54)),
+                    ),
+                  ),
+                ]),
+                SizedBox(height: 12.h),
+
+                // Avatar
+                Stack(alignment: Alignment.bottomRight, children: [
+                  Container(
+                    width: 88.w, height: 88.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [AppColors.accent, Color(0xFFFF8533)],
+                        begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.accent.withOpacity(0.35),
+                          blurRadius: 20, offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        (user?.name ?? user?.phone ?? 'U')[0].toUpperCase(),
+                        style: TextStyle(
+                          color: Colors.white, fontSize: 36.sp,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 26.w, height: 26.w,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF2F2F2),
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(Icons.edit_rounded,
+                      color: AppColors.accent, size: 12.sp),
+                  ),
+                ]),
+                SizedBox(height: 14.h),
+
+                // Name
+                Text(
+                  user?.name ?? user?.phone ?? '',
+                  style: TextStyle(
+                    fontSize: 20.sp, fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : const Color(0xFF111111),
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+
+                // Role badge
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: (isSeller ? AppColors.accent : AppColors.blue).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                      color: (isSeller ? AppColors.accent : AppColors.blue).withOpacity(0.25),
+                    ),
+                  ),
+                  child: Text(
+                    isSeller ? '🏪 Продавец' : '🛍️ Покупатель',
+                    style: TextStyle(
+                      color: isSeller ? AppColors.accent : AppColors.blue,
+                      fontSize: 12.sp, fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+
+                // Stats row
+                Row(children: [
+                  _StatCard('12',  'Заказов',   AppColors.accent,  isDark),
+                  SizedBox(width: 8.w),
+                  _StatCard('4,8', 'Рейтинг',   AppColors.gold,    isDark),
+                  SizedBox(width: 8.w),
+                  _StatCard('23',  'Избранных', AppColors.red,     isDark),
+                ]),
+              ]),
+            ),
+          ),
+
+          // ── Divider ───────────────────────────────────────────────
+          SliverToBoxAdapter(child: SizedBox(height: 16.h)),
+
+          // ── Menu sections ─────────────────────────────────────────
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            sliver: SliverList(delegate: SliverChildListDelegate([
+
+              // Seller section
+              if (isSeller) ...[
+                _SectionLabel('Продавец', isDark),
+                _MenuCard(isDark: isDark, items: [
+                  _Item('📊', 'Кабинет продавца', AppColors.green,  () => context.push(Routes.dashboard)),
+                  _Item('📦', 'Мои заказы продавца', AppColors.blue, () => context.push(Routes.sellerOrders)),
+                  _Item('📈', 'Аналитика',        AppColors.purple, () => context.push(Routes.analytics)),
+                ]),
+                SizedBox(height: 12.h),
+              ],
+
+              // Shopping section
+              _SectionLabel('Покупки', isDark),
+              _MenuCard(isDark: isDark, items: [
+                _Item('🛍️', 'Мои заказы',    AppColors.accent, () => context.push(Routes.orders)),
+                _Item('❤️', 'Избранное',      AppColors.red,    () {}),
+                _Item('📍', 'Адреса',         AppColors.orange, () {}),
+                _Item('💳', 'Оплата',         AppColors.gold,   () {}),
+              ]),
+              SizedBox(height: 12.h),
+
+              // Account section
+              _SectionLabel('Аккаунт', isDark),
+              _MenuCard(isDark: isDark, items: [
+                _Item('🔔', 'Уведомления', AppColors.purple, () => context.push(Routes.notifications)),
+                _Item('👑', 'GogoMarket Pro', AppColors.accent, () => context.push(Routes.pro), highlight: true),
+                _Item('🆘', 'Поддержка',   AppColors.blue,   () {}),
+              ]),
+              SizedBox(height: 12.h),
+
+              // Logout
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  context.read<AuthBloc>().add(AuthLogoutEvent());
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.red.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: AppColors.red.withOpacity(0.2)),
+                  ),
+                  child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.logout_rounded, color: AppColors.red, size: 18.sp),
+                    SizedBox(width: 8.w),
+                    Text('Выйти из аккаунта', style: TextStyle(
+                      color: AppColors.red, fontSize: 14.sp, fontWeight: FontWeight.w700)),
+                  ])),
+                ),
+              ),
+
+              SizedBox(height: 110.h),
+            ])),
+          ),
+        ],
       ),
-      body: ListView(padding: EdgeInsets.all(16.w), children: [
-        // Avatar + name
-        Center(child: Column(children: [
-          Container(width: 80.w, height: 80.w,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [AppColors.accent, AppColors.purple]),
-              shape: BoxShape.circle,
-            ),
-            child: Center(child: Text((user?.name ?? user?.phone ?? 'U')[0].toUpperCase(),
-              style: TextStyle(color: Colors.white, fontSize: 34.sp, fontWeight: FontWeight.w700, fontFamily: 'Playfair')))),
-          SizedBox(height: 10.h),
-          Text(user?.name ?? user?.phone ?? '', style: TextStyle(color: AppColors.textPrimary, fontSize: 18.sp, fontWeight: FontWeight.w700)),
-          SizedBox(height: 4.h),
-          Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
-            decoration: BoxDecoration(
-              color: (user?.isSeller == true ? AppColors.green : AppColors.blue).withOpacity(0.12),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(user?.isSeller == true ? '🏪 Продавец' : '🛍️ Покупатель',
-              style: TextStyle(color: user?.isSeller == true ? AppColors.green : AppColors.blue, fontSize: 12.sp, fontWeight: FontWeight.w500))),
-        ])),
-        SizedBox(height: 24.h),
-
-        // Stats
-        Row(children: [
-          _StatBox('12', 'Заказов'),
-          _StatBox('3', 'Отзывов'),
-          _StatBox('8', 'Избранных'),
-        ]),
-        SizedBox(height: 20.h),
-
-        // Seller dashboard button (if seller)
-        if (user?.isSeller == true)
-          _MenuItem('📊 Кабинет продавца', AppColors.green, () => context.push(Routes.dashboard)),
-
-        // Menu items
-        _MenuItem('📦 Мои заказы',       AppColors.blue,   () => context.push(Routes.orders)),
-        _MenuItem('❤️ Избранное',         AppColors.red,    () {}),
-        _MenuItem('💳 Способы оплаты',   AppColors.gold,   () {}),
-        _MenuItem('📍 Мои адреса',       AppColors.orange, () {}),
-        _MenuItem('🔔 Уведомления',      AppColors.purple, () => context.push(Routes.notifications)),
-        _MenuItem('👑 GogoMarket Pro',   AppColors.accent, () => context.push(Routes.pro)),
-        SizedBox(height: 12.h),
-        _MenuItem('🚪 Выйти', AppColors.red, () => context.read<AuthBloc>().add(AuthLogoutEvent()), danger: true),
-      ]),
     );
   }
 }
 
-class _StatBox extends StatelessWidget {
+// ── Stat card ─────────────────────────────────────────────────────────────────
+class _StatCard extends StatelessWidget {
   final String value, label;
-  const _StatBox(this.value, this.label);
+  final Color color;
+  final bool isDark;
+  const _StatCard(this.value, this.label, this.color, this.isDark);
+
   @override
-  Widget build(BuildContext context) => Expanded(child: Container(
-    margin: EdgeInsets.symmetric(horizontal: 4.w),
-    padding: EdgeInsets.symmetric(vertical: 14.h),
-    decoration: BoxDecoration(color: AppColors.bgCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
-    child: Column(children: [
-      Text(value, style: TextStyle(color: AppColors.textPrimary, fontSize: 20.sp, fontWeight: FontWeight.w700)),
-      Text(label, style: TextStyle(color: AppColors.textMuted, fontSize: 11.sp)),
-    ]),
-  ));
+  Widget build(BuildContext context) => Expanded(
+    child: Container(
+      padding: EdgeInsets.symmetric(vertical: 14.h),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: color.withOpacity(0.15)),
+      ),
+      child: Column(children: [
+        Text(value, style: TextStyle(
+          fontSize: 20.sp, fontWeight: FontWeight.w900,
+          color: color,
+        )),
+        SizedBox(height: 3.h),
+        Text(label, style: TextStyle(
+          fontSize: 10.5.sp,
+          color: isDark ? Colors.white.withOpacity(0.38) : Colors.black.withOpacity(0.38),
+          fontWeight: FontWeight.w500,
+        )),
+      ]),
+    ),
+  );
 }
 
-class _MenuItem extends StatelessWidget {
-  final String label; final Color color; final VoidCallback onTap; final bool danger;
-  const _MenuItem(this.label, this.color, this.onTap, {this.danger = false});
+// ── Section label ─────────────────────────────────────────────────────────────
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  final bool isDark;
+  const _SectionLabel(this.text, this.isDark);
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.fromLTRB(4.w, 0, 0, 8.h),
+    child: Text(text, style: TextStyle(
+      fontSize: 12.sp, fontWeight: FontWeight.w700,
+      color: isDark ? Colors.white.withOpacity(0.30) : Colors.black.withOpacity(0.30),
+      letterSpacing: 0.8,
+    )),
+  );
+}
+
+// ── Menu card ─────────────────────────────────────────────────────────────────
+class _Item {
+  final String emoji, label;
+  final Color color;
+  final VoidCallback onTap;
+  final bool highlight;
+  const _Item(this.emoji, this.label, this.color, this.onTap, {this.highlight = false});
+}
+
+class _MenuCard extends StatelessWidget {
+  final List<_Item> items;
+  final bool isDark;
+  const _MenuCard({required this.items, required this.isDark});
+
   @override
   Widget build(BuildContext context) => Container(
-    margin: EdgeInsets.only(bottom: 8.h),
-    child: ListTile(
-      onTap: onTap,
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 2.h),
-      tileColor: AppColors.bgCard,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: AppColors.border)),
-      leading: Container(width: 36, height: 36,
-        decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
-        child: Center(child: Text(label.split(' ').first, style: const TextStyle(fontSize: 16)))),
-      title: Text(label.split(' ').skip(1).join(' '),
-        style: TextStyle(color: danger ? AppColors.red : AppColors.textPrimary, fontSize: 14.sp, fontWeight: FontWeight.w500)),
-      trailing: danger ? null : const Icon(Icons.arrow_forward_ios, color: AppColors.textMuted, size: 14),
+    decoration: BoxDecoration(
+      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+      borderRadius: BorderRadius.circular(18.r),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+          blurRadius: 12, offset: const Offset(0, 3),
+        ),
+      ],
     ),
+    child: Column(children: List.generate(items.length, (i) {
+      final item = items[i];
+      final isLast = i == items.length - 1;
+      return GestureDetector(
+        onTap: () { HapticFeedback.selectionClick(); item.onTap(); },
+        behavior: HitTestBehavior.opaque,
+        child: Column(children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            child: Row(children: [
+              Container(
+                width: 36.w, height: 36.w,
+                decoration: BoxDecoration(
+                  color: item.color.withOpacity(item.highlight ? 0.18 : 0.1),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Center(child: Text(item.emoji, style: TextStyle(fontSize: 17.sp))),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(child: Text(item.label, style: TextStyle(
+                fontSize: 14.sp, fontWeight: FontWeight.w600,
+                color: item.highlight
+                  ? AppColors.accent
+                  : (isDark ? Colors.white.withOpacity(0.87) : const Color(0xFF1A1A1A)),
+              ))),
+              Icon(Icons.chevron_right_rounded,
+                size: 18.sp,
+                color: isDark ? Colors.white.withOpacity(0.20) : Colors.black.withOpacity(0.20)),
+            ]),
+          ),
+          if (!isLast) Divider(
+            height: 1, thickness: 1, indent: 66.w,
+            color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.06),
+          ),
+        ]),
+      );
+    })),
   );
 }

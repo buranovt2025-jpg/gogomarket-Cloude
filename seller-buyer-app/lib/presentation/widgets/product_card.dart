@@ -89,7 +89,7 @@ class ProductCard extends StatelessWidget {
                     duration: const Duration(milliseconds: 200),
                     width: 32, height: 32,
                     decoration: BoxDecoration(
-                      color: inCart ? AppColors.accent : Colors.black54,
+                      color: inCart ? AppColors.accent : Colors.black.withOpacity(0.54),
                       shape: BoxShape.circle,
                     ),
                     child: Center(

@@ -95,7 +95,7 @@ class _Body extends StatelessWidget {
               child: GestureDetector(
                 onTap: () => context.pop(),
                 child: Container(width: 38, height: 38,
-                  decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: Colors.black.withOpacity(0.54), shape: BoxShape.circle),
                   child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16)),
               ),
             ),
@@ -103,7 +103,7 @@ class _Body extends StatelessWidget {
             // Share
             Positioned(top: 48.h, right: 16.w,
               child: Container(width: 38, height: 38,
-                decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: Colors.black.withOpacity(0.54), shape: BoxShape.circle),
                 child: IconButton(icon: const Icon(Icons.share_outlined, color: Colors.white, size: 16), onPressed: () {})),
             ),
 
@@ -116,7 +116,7 @@ class _Body extends StatelessWidget {
                     width: i == photoIdx ? 16 : 6, height: 6,
                     margin: const EdgeInsets.symmetric(horizontal: 3),
                     decoration: BoxDecoration(
-                      color: i == photoIdx ? AppColors.accent : Colors.white54,
+                      color: i == photoIdx ? AppColors.accent : Colors.white.withOpacity(0.54),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   )),

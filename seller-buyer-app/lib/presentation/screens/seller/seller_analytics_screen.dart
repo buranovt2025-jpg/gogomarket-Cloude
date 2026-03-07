@@ -293,8 +293,8 @@ class _Tip extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: EdgeInsets.only(bottom: 6.h),
     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('• ', style: TextStyle(color: Colors.white70, fontSize: 13.sp)),
-      Expanded(child: Text(text, style: TextStyle(color: Colors.white70, fontSize: 12.sp, height: 1.4))),
+      Text('• ', style: TextStyle(color: Colors.white.withOpacity(0.70), fontSize: 13.sp)),
+      Expanded(child: Text(text, style: TextStyle(color: Colors.white.withOpacity(0.70), fontSize: 12.sp, height: 1.4))),
     ]),
   );
 }

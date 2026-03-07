@@ -72,7 +72,7 @@ class _Tab extends StatelessWidget {
   final String t; final bool a;
   const _Tab(this.t, this.a);
   @override Widget build(BuildContext context) => Text(t, style: TextStyle(
-    color: a ? Colors.white : Colors.white54, fontSize: 15.sp,
+    color: a ? Colors.white : Colors.white.withOpacity(0.54), fontSize: 15.sp,
     fontWeight: a ? FontWeight.w700 : FontWeight.normal,
   ));
 }
@@ -97,11 +97,11 @@ class _ReelPage extends StatelessWidget {
           SizedBox(height: 12.h),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(20)),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.play_circle_outline, color: Colors.white38, size: 16.sp),
+              Icon(Icons.play_circle_outline, color: Colors.white.withOpacity(0.38), size: 16.sp),
               SizedBox(width: 6.w),
-              Text('Видео скоро', style: TextStyle(color: Colors.white38, fontSize: 12.sp)),
+              Text('Видео скоро', style: TextStyle(color: Colors.white.withOpacity(0.38), fontSize: 12.sp)),
             ]),
           ),
         ])),
@@ -153,7 +153,7 @@ class _ReelPage extends StatelessWidget {
             Text('@${reel.seller}', style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.w600)),
             SizedBox(width: 8.w),
             Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 2.h),
-              decoration: BoxDecoration(border: Border.all(color: Colors.white54), borderRadius: BorderRadius.circular(20)),
+              decoration: BoxDecoration(border: Border.all(color: Colors.white.withOpacity(0.54)), borderRadius: BorderRadius.circular(20)),
               child: Text('+ Подписаться', style: TextStyle(color: Colors.white, fontSize: 10.sp))),
           ]),
           SizedBox(height: 6.h),
@@ -163,8 +163,8 @@ class _ReelPage extends StatelessWidget {
             onTap: () => context.push(Routes.productDetail(reel.productId)),
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-              decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white24)),
+              decoration: BoxDecoration(color: Colors.black.withOpacity(0.54), borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.24))),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('🛍️', style: TextStyle(fontSize: 16.sp)),
                 SizedBox(width: 8.w),
@@ -175,7 +175,7 @@ class _ReelPage extends StatelessWidget {
                     style: TextStyle(color: AppColors.accent, fontSize: 13.sp, fontWeight: FontWeight.w700)),
                 ]),
                 SizedBox(width: 8.w),
-                const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 11),
+                const Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.54), size: 11),
               ]),
             ),
           ),
@@ -191,10 +191,10 @@ class _Btn extends StatelessWidget {
   @override Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: Column(children: [
-      Icon(icon, color: color, size: 28.sp, shadows: const [Shadow(color: Colors.black54, blurRadius: 8)]),
+      Icon(icon, color: color, size: 28.sp, shadows: const [Shadow(color: Colors.black.withOpacity(0.54), blurRadius: 8)]),
       SizedBox(height: 2.h),
       Text(label, style: TextStyle(color: Colors.white, fontSize: 11.sp,
-        shadows: const [Shadow(color: Colors.black54, blurRadius: 4)])),
+        shadows: const [Shadow(color: Colors.black.withOpacity(0.54), blurRadius: 4)])),
     ]),
   );
 }

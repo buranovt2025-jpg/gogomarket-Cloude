@@ -258,7 +258,7 @@ class _Bubble extends StatelessWidget {
           )),
           SizedBox(height: 3.h),
           Text(FormatUtils.timeShort(msg.createdAt), style: TextStyle(
-            color: msg.isMe ? Colors.white60 : AppColors.textMuted, fontSize: 10.sp,
+            color: msg.isMe ? Colors.white.withOpacity(0.60) : AppColors.textMuted, fontSize: 10.sp,
           )),
         ]),
       ),

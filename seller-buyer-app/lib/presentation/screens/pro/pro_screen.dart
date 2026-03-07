@@ -115,7 +115,7 @@ class _ProScreenState extends State<ProScreen> {
                 Text('Подключить ${_plans[_selected].name}', style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600)),
                 SizedBox(width: 8.w),
                 Text('— ${_fmt(_plans[_selected].pricePerMonth)} сум/мес',
-                  style: TextStyle(fontSize: 12.sp, color: Colors.white70)),
+                  style: TextStyle(fontSize: 12.sp, color: Colors.white.withOpacity(0.70))),
               ]),
             ),
           ),
