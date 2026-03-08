@@ -1,76 +1,78 @@
-name: 🚚 Courier-Admin APK
+name: 🚚 GogoMarket Courier APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'courier-admin-app/**'
       - '.github/workflows/flutter-courier-admin.yml'
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build APK on VPS
+  build-apk:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build APK on VPS via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - uses: actions/setup-java@v4
         with:
-          host: 206.189.12.56
-          username: root
-          password: ${{ secrets.VPS_PASSWORD }}
-          timeout: 30m
-          command_timeout: 25m
-          script: |
-            set -e
-            export PATH="/opt/flutter/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:$PATH"
-            export ANDROID_HOME=/opt/android-sdk
-            export ANDROID_SDK_ROOT=/opt/android-sdk
+          distribution: temurin
+          java-version: '17'
 
-            echo "📦 Pulling latest code..."
-            cd /opt/gogomarket-Cloude
-            git pull origin main
-
-            echo "🚚 Building Courier-Admin APK..."
-            cd /opt/gogomarket-Cloude/courier-admin-app
-
-            # Init android if not exists
-            if [ ! -d "android" ]; then
-              echo "⚙️ Initializing Android platform..."
-              flutter create --platforms=android .
-              # Set package name
-              sed -i 's/com.example.courier_admin_app/uz.gogomarket.courier/g' \
-                android/app/build.gradle \
-                android/app/src/main/AndroidManifest.xml \
-                android/app/src/debug/AndroidManifest.xml \
-                android/app/src/profile/AndroidManifest.xml 2>/dev/null || true
-            fi
-
-            flutter pub get
-            flutter build apk --release \
-              --dart-define=API_URL=http://206.189.12.56/api/v1 \
-              --no-tree-shake-icons
-
-            APK_PATH=$(find build/app/outputs -name "*.apk" | head -1)
-            echo "✅ APK: $APK_PATH"
-
-            # Copy to nginx public folder
-            mkdir -p /var/www/html/apk
-            cp "$APK_PATH" /var/www/html/apk/gogomarket-courier-admin.apk
-            echo "📱 APK available at: http://206.189.12.56/apk/gogomarket-courier-admin.apk"
-
-      - name: Send Telegram notification
-        if: always()
-        uses: appleboy/telegram-action@master
+      - uses: subosito/flutter-action@v2
         with:
-          to: ${{ secrets.TG_CHAT_ID }}
-          token: ${{ secrets.TG_BOT_TOKEN }}
-          message: |
-            ${{ job.status == 'success' && '✅' || '❌' }} *Courier-Admin APK*
-            Статус: ${{ job.status }}
-            Коммит: `${{ github.sha }}`
-            ${{ job.status == 'success' && '📥 http://206.189.12.56/apk/gogomarket-courier-admin.apk' || '' }}
+          flutter-version: '3.24.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Create local.properties
+        working-directory: courier-admin-app/android
+        run: |
+          echo "flutter.sdk=$FLUTTER_ROOT" > local.properties
+          echo "sdk.dir=$ANDROID_HOME" >> local.properties
+
+      - name: Flutter pub get
+        working-directory: courier-admin-app
+        run: flutter pub get 2>&1 | tee /tmp/pubget.log
+
+      - name: Flutter analyze
+        working-directory: courier-admin-app
+        run: flutter analyze --no-fatal-infos 2>&1 | tee /tmp/analyze.log
+        continue-on-error: true
+
+      - name: Build APK
+        working-directory: courier-admin-app
+        run: flutter build apk --release --no-tree-shake-icons 2>&1 | tee /tmp/build.log
+        continue-on-error: true
+
+      - name: Check result and notify
+        env:
+          TG_BOT_TOKEN: "8786274351:AAHXhlhzvIj8_xPQzE0e6bVBdMUlE-1dxq4"
+          TG_CHAT_ID: "906884"
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          APK=$(find courier-admin-app/build -name "app-release.apk" 2>/dev/null | head -1)
+
+          if [ -n "$APK" ] && [ -f "$APK" ]; then
+            SIZE=$(du -sh "$APK" | cut -f1)
+            curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument" \
+              -F "chat_id=${TG_CHAT_ID}" \
+              -F "document=@${APK}" \
+              -F "caption=🚚 Courier APK готов! ${SHORT_SHA} | ${SIZE}"
+          else
+            {
+              echo "=== ANALYZE ERRORS ==="
+              grep -E "error •" /tmp/analyze.log 2>/dev/null | head -30
+              echo "=== BUILD ERRORS ==="
+              grep -E "error:|Error:|FAILED|Exception" /tmp/build.log 2>/dev/null | head -40
+              echo "=== BUILD TAIL ==="
+              tail -30 /tmp/build.log 2>/dev/null
+            } > /tmp/error.txt
+
+            curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument" \
+              -F "chat_id=${TG_CHAT_ID}" \
+              -F "document=@/tmp/error.txt" \
+              -F "caption=❌ Courier упало ${SHORT_SHA}"
+            exit 1
+          fi

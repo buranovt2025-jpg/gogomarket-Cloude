@@ -196,7 +196,7 @@ class _NewOrderBanner extends StatelessWidget {
                   onPressed: () {},
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white54),
+                    side: const BorderSide(color: Colors.white.withOpacity(0.54)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   child: const Text('Пропустить'),
