@@ -217,4 +217,29 @@ class ApiClient {
     return Map<String,dynamic>.from(res.data);
   }
 
+
+  Future<String> uploadVideo(String filePath) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath, filename: 'reel.mp4'),
+    });
+    final res = await _dio.post('/upload/video', data: formData,
+      options: Options(sendTimeout: const Duration(minutes: 5),
+        receiveTimeout: const Duration(minutes: 2)));
+    return res.data['url'] as String;
+  }
+
+  Future<void> createReel({
+    required String videoUrl,
+    String? thumbUrl,
+    required String title,
+    String? productId,
+  }) async {
+    await _dio.post('/reels', data: {
+      'videoUrl':  videoUrl,
+      if (thumbUrl != null) 'thumbUrl': thumbUrl,
+      'title':     title,
+      if (productId != null) 'productId': productId,
+    });
+  }
+
 }

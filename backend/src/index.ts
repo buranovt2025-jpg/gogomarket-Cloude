@@ -23,6 +23,7 @@ import deliveryRouter     from './routes/delivery';
 import notificationsRouter from './routes/notifications';
 import adminRouter        from './routes/admin';
 import uploadRouter       from './routes/upload';
+import reelsRouter        from './routes/reels';
 
 const app    = express();
 const server = createServer(app);
@@ -58,6 +59,7 @@ app.use('/api/delivery',      deliveryRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/admin',         adminRouter);
 app.use('/api/upload',        uploadRouter);
+app.use('/api/reels',         reelsRouter);
 app.use('/api/payments',      paymentsRouter);
 app.use('/api/push',          pushRouter);
 
