@@ -4,7 +4,6 @@
  */
 import { db } from '../src/db';
 import { users, sellers, categories, products, productPhotos, reels } from '../src/db/schema';
-import bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 
 async function seed() {
@@ -26,7 +25,6 @@ async function seed() {
   console.log('✓ Categories:', Object.keys(catMap));
 
   // ── Seller users ──────────────────────────────────────────────────────────
-  const hash = await bcrypt.hash('pass1234', 10);
   const sellerInputs = [
     { phone: '+998901111111', name: 'Aisha Karimova',    role: 'seller' as const },
     { phone: '+998902222222', name: 'Kamola Yusupova',   role: 'seller' as const },
@@ -39,7 +37,7 @@ async function seed() {
   for (const u of sellerInputs) {
     let [row] = await db.select().from(users).where(eq(users.phone, u.phone));
     if (!row) {
-      [row] = await db.insert(users).values({ ...u, passwordHash: hash, isVerified: true }).returning();
+      [row] = await db.insert(users).values({ ...u, isVerified: true }).returning();
     }
     userIds.push(row.id);
   }
@@ -73,7 +71,7 @@ async function seed() {
   for (const s of sellerInputs2) {
     let [row] = await db.select().from(sellers).where(eq(sellers.userId, s.userId));
     if (!row) {
-      [row] = await db.insert(sellers).values({ ...s, plan: 'pro', isVerified: true }).returning();
+      [row] = await db.insert(sellers).values({ ...s, plan: 'business', isVerified: true }).returning();
     }
     sellerIds.push(row.id);
   }
