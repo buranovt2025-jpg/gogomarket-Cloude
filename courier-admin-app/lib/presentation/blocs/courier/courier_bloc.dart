@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:injectable/injectable.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/network/api_client.dart';
@@ -68,7 +67,6 @@ class CourierState extends Equatable {
     [isOnline, availableOrders.length, activeOrder?.id, deliveryStep, currentLat, currentLng];
 }
 
-@injectable
 class CourierBloc extends Bloc<CourierEvent, CourierState> {
   final ApiClient      _api;
   final SocketService  _socket;

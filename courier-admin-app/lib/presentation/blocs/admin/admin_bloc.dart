@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:injectable/injectable.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../data/models/admin/seller_pending_model.dart';
@@ -90,7 +89,6 @@ class AdminState extends Equatable {
     [dashboard, pendingSellers.length, flaggedContent.length, orders.length, sellerDecisions, contentDecisions, approvedWithdrawals, isLoading, toast];
 }
 
-@injectable
 class AdminBloc extends Bloc<AdminEvent, AdminState> {
   final ApiClient _api;
   AdminBloc(this._api) : super(const AdminState()) {

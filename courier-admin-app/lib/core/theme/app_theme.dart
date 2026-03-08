@@ -8,7 +8,7 @@ class AppTheme {
   static ThemeData get darkTheme => ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    fontFamily: 'DM Sans',
+    fontFamily: 'Inter',
     scaffoldBackgroundColor: AppColors.bgDark,
     colorScheme: const ColorScheme.dark(
       primary: AppColors.green,
@@ -25,11 +25,11 @@ class AppTheme {
         statusBarIconBrightness: Brightness.light,
       ),
       titleTextStyle: TextStyle(
-        fontFamily: 'DM Sans', fontSize: 17,
+        fontFamily: 'Inter', fontSize: 17,
         fontWeight: FontWeight.w600, color: AppColors.textPrimary,
       ),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: CardTheme(
       color: AppColors.bgCard, elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
@@ -40,13 +40,13 @@ class AppTheme {
         minimumSize: const Size(double.infinity, 52),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
-        textStyle: const TextStyle(fontFamily: 'DM Sans', fontSize: 15, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(fontFamily: 'Inter', fontSize: 15, fontWeight: FontWeight.w600),
       ),
     ),
     dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
     snackBarTheme: const SnackBarThemeData(
       backgroundColor: AppColors.bgCard,
-      contentTextStyle: TextStyle(color: AppColors.textPrimary, fontFamily: 'DM Sans'),
+      contentTextStyle: TextStyle(color: AppColors.textPrimary, fontFamily: 'Inter'),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
     ),

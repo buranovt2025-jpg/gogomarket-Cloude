@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
-import 'package:injectable/injectable.dart';
 
-@injectable
 class ThemeCubit extends HydratedCubit<ThemeMode> {
   ThemeCubit() : super(ThemeMode.dark);
   void toggle() => emit(state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);

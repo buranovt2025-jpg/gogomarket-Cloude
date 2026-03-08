@@ -1,45 +1,31 @@
-import 'package:json_annotation/json_annotation.dart';
-import 'package:equatable/equatable.dart';
-part 'courier_order_model.g.dart';
-
-@JsonSerializable()
-class CourierOrderModel extends Equatable {
+class CourierOrderModel {
   final String id;
-  final String status;
   final String buyerName;
-  final String sellerName;
-  final String sellerAddress;
-  final String deliveryAddress;
-  final double sellerLat;
-  final double sellerLng;
-  final double deliveryLat;
-  final double deliveryLng;
-  final int feeTiyin;
-  final double distanceKm;
-  final int etaMinutes;
-  final String productTitle;
-  final String? productPhotoUrl;
-  final String? buyerPhone;
+  final String buyerPhone;
+  final String address;
+  final double? lat;
+  final double? lng;
+  final int totalTiyin;
+  final String status;
   final DateTime createdAt;
 
   const CourierOrderModel({
-    required this.id, required this.status,
-    required this.buyerName, required this.sellerName,
-    required this.sellerAddress, required this.deliveryAddress,
-    required this.sellerLat, required this.sellerLng,
-    required this.deliveryLat, required this.deliveryLng,
-    required this.feeTiyin, required this.distanceKm,
-    required this.etaMinutes, required this.productTitle,
-    this.productPhotoUrl, this.buyerPhone,
-    required this.createdAt,
+    required this.id, required this.buyerName, required this.buyerPhone,
+    required this.address, this.lat, this.lng,
+    required this.totalTiyin, required this.status, required this.createdAt,
   });
 
-  factory CourierOrderModel.fromJson(Map<String, dynamic> json) =>
-    _\$CourierOrderModelFromJson(json);
-  Map<String, dynamic> toJson() => _\$CourierOrderModelToJson(this);
+  factory CourierOrderModel.fromJson(Map<String, dynamic> j) => CourierOrderModel(
+    id:         j['id'] as String,
+    buyerName:  j['buyerName'] as String? ?? '',
+    buyerPhone: j['buyerPhone'] as String? ?? '',
+    address:    j['address'] as String? ?? '',
+    lat:        (j['lat'] as num?)?.toDouble(),
+    lng:        (j['lng'] as num?)?.toDouble(),
+    totalTiyin: (j['totalAmount'] as num?)?.toInt() ?? 0,
+    status:     j['status'] as String? ?? '',
+    createdAt:  DateTime.tryParse(j['createdAt'] as String? ?? '') ?? DateTime.now(),
+  );
 
-  int get feeSum => feeTiyin ~/ 100;
-
-  @override
-  List<Object?> get props => [id, status];
+  int get totalSum => totalTiyin ~/ 100;
 }

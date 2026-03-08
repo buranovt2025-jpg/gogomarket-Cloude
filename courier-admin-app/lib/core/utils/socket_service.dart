@@ -1,9 +1,7 @@
-import 'package:injectable/injectable.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:hive_flutter/hive_flutter.dart';
 import '../constants/app_constants.dart';
 
-@singleton
 class SocketService {
   late io.Socket _socket;
   bool _initialized = false;

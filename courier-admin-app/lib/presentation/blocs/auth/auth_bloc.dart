@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:injectable/injectable.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/models/user_model.dart';
 import '../../../core/network/api_client.dart';
@@ -33,7 +32,6 @@ class AuthError extends AuthState {
   @override List<Object?> get props => [message];
 }
 
-@injectable
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ApiClient _api;
   AuthBloc(this._api) : super(AuthInitial()) {
