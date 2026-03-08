@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'core/constants/app_colors.dart';
 import 'core/di/injection.dart';
 import 'core/router/app_router.dart';
+import 'core/services/push_service.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/cart/cart_bloc.dart';
 import 'presentation/blocs/theme/theme_cubit.dart';
@@ -25,46 +27,20 @@ void main() async {
 
   await configureDependencies();
 
-  // Firebase — запускаем в фоне, не блокируем запуск приложения
+  // Firebase + Push — в фоне, не блокируем запуск
   _initFirebaseInBackground();
 
   runApp(const GogoMarketApp());
 }
 
-// Не ждём Firebase — приложение запускается мгновенно
 void _initFirebaseInBackground() async {
   try {
-    // Откладываем чтобы UI успел отрисоваться
     await Future.delayed(const Duration(milliseconds: 500));
-    // ignore: depend_on_referenced_packages
-    final firebase = await _tryLoadFirebase();
-    if (firebase) {
-      // Push init тоже в фоне
-      _tryInitPush();
-    }
+    await Firebase.initializeApp();
+    await PushService.init();
+    debugPrint('[Firebase] ✅ Initialized');
   } catch (e) {
-    debugPrint('[Firebase] Background init skipped: $e');
-  }
-}
-
-Future<bool> _tryLoadFirebase() async {
-  try {
-    // Динамически импортируем чтобы не крашило без google-services.json
-    // ignore: avoid_dynamic_calls
-    final lib = await Future.value(true); // placeholder
-    debugPrint('[Firebase] Not configured yet — add google-services.json');
-    return false;
-  } catch (_) {
-    return false;
-  }
-}
-
-void _tryInitPush() async {
-  try {
-    // Push будет работать после настройки Firebase
-    debugPrint('[Push] Firebase not configured, push skipped');
-  } catch (e) {
-    debugPrint('[Push] Init error: $e');
+    debugPrint('[Firebase] Skipped (no google-services.json?): $e');
   }
 }
 
