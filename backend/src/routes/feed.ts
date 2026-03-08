@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
     isBoosted:    products.isBoosted,
     sellerId:     sellers.id,
     sellerName:   sellers.shopName,
-    sellerAvatar: sellers.avatarUrl,
+    sellerAvatar: sellers.logoUrl,
     sellerRating: sellers.avgRating,
     createdAt:    products.createdAt,
   })
@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
         .from(productPhotos)
         .where(and(
           sql`${productPhotos.productId} = ANY(ARRAY[${sql.join(productIds.map(id => sql`${id}`), sql`, `)}])`,
-          eq(productPhotos.isCover, true),
+          eq(productPhotos.isMain, true),
         ))
         .orderBy(asc(productPhotos.order))
     : [];
@@ -97,7 +97,7 @@ router.get('/', async (req, res) => {
       productId:   reels.productId,
       sellerId:    sellers.id,
       sellerName:  sellers.shopName,
-      sellerAvatar: sellers.avatarUrl,
+      sellerAvatar: sellers.logoUrl,
       createdAt:   reels.createdAt,
     })
     .from(reels)

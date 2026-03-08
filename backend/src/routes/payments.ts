@@ -46,7 +46,7 @@ router.post('/initiate', authenticate, async (req, res) => {
 // ── GET /v1/payments/status/:orderId ─────────────────────────────────────────
 router.get('/status/:orderId', authenticate, async (req, res) => {
   const [payment] = await db.select().from(payments)
-    .where(eq(payments.orderId, req.params.orderId)).limit(1);
+    .where(eq(payments.orderId, req.params.orderId as string)).limit(1);
   if (!payment) return res.json({ status: 'not_initiated' });
   res.json({ status: payment.status, provider: payment.provider, paidAt: payment.paidAt });
 });

@@ -136,13 +136,10 @@ router.delete('/:id', authenticate, requireSeller, async (req, res) => {
   res.json({ message: 'Product deleted' });
 });
 
-export default router;
-
 // POST /v1/products/:id/photos — attach photos to product
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { productPhotos } from '../db/schema';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || '/opt/gogomarket-Cloude/uploads';
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -186,7 +183,7 @@ router.post('/:id/photos', authenticate, requireSeller, photoUpload.array('photo
     db.insert(productPhotos).values({
       productId: existing.id,
       url:       `${baseUrl}/uploads/${file.filename}`,
-      isCover:   order === 0,
+      isMain:    order === 0,
       order:     order++,
     }).returning()
   ));

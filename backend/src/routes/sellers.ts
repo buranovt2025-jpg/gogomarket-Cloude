@@ -166,7 +166,7 @@ router.get('/analytics', authenticate, requireSeller, async (req, res) => {
     revenueGrowth: 0,
     orders:        sellerOrders.length,
     ordersGrowth:  0,
-    views:         seller.totalViews ?? 0,
+    views:         0,
     viewsGrowth:   0,
     conversion:    sellerOrders.length > 0 ? (doneOrders.length / sellerOrders.length * 100) : 0,
     chart:         Object.entries(chart).map(([day, v]) => ({ day: parseInt(day), ...v })),
