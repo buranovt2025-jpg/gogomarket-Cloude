@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:math' as math;import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:math' as math;
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
-import '../../../core/constants/app_constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/utils/socket_service.dart';
 import '../../../data/models/courier_order_model.dart';
@@ -14,12 +14,15 @@ abstract class CourierEvent extends Equatable {
 class CourierLoadOrders    extends CourierEvent {}
 class CourierToggleOnline  extends CourierEvent {}
 class CourierAcceptOrder   extends CourierEvent {
-  final String orderId; CourierAcceptOrder(this.orderId);
+  final String orderId;
+  CourierAcceptOrder(this.orderId);
   @override List<Object?> get props => [orderId];
 }
 class CourierNextStep      extends CourierEvent {}
 class CourierLocationUpdated extends CourierEvent {
-  final double lat; final double lng; final double bearing;
+  final double lat;
+  final double lng;
+  final double bearing;
   CourierLocationUpdated({required this.lat, required this.lng, this.bearing = 0});
   @override List<Object?> get props => [lat, lng];
 }
@@ -29,7 +32,7 @@ class CourierState extends Equatable {
   final bool isOnline;
   final List<CourierOrderModel> availableOrders;
   final CourierOrderModel? activeOrder;
-  final int deliveryStep;   // 0=pickup, 1=transit, 2=delivered
+  final int deliveryStep;
   final double? currentLat;
   final double? currentLng;
   final bool isLoading;
@@ -47,10 +50,15 @@ class CourierState extends Equatable {
   });
 
   CourierState copyWith({
-    bool? isOnline, List<CourierOrderModel>? availableOrders,
-    CourierOrderModel? activeOrder, int? deliveryStep,
-    double? currentLat, double? currentLng,
-    bool? isLoading, String? error, bool clearOrder = false,
+    bool? isOnline,
+    List<CourierOrderModel>? availableOrders,
+    CourierOrderModel? activeOrder,
+    int? deliveryStep,
+    double? currentLat,
+    double? currentLng,
+    bool? isLoading,
+    String? error,
+    bool clearOrder = false,
   }) => CourierState(
     isOnline:        isOnline        ?? this.isOnline,
     availableOrders: availableOrders ?? this.availableOrders,
@@ -66,10 +74,13 @@ class CourierState extends Equatable {
     [isOnline, availableOrders.length, activeOrder?.id, deliveryStep, currentLat, currentLng];
 }
 
+// ── BLoC ──────────────────────────────────────────────────────────────────────
 class CourierBloc extends Bloc<CourierEvent, CourierState> {
-  final ApiClient      _api;
-  final SocketService  _socket;
-  Timer? _mockTimer;
+  final ApiClient     _api;
+  final SocketService _socket;
+  Timer? _gpsTimer;
+  double _mockLat = 41.299496;
+  double _mockLng = 69.240073;
 
   CourierBloc(this._api, this._socket) : super(const CourierState()) {
     on<CourierLoadOrders>(_onLoad);
@@ -92,12 +103,12 @@ class CourierBloc extends Bloc<CourierEvent, CourierState> {
   Future<void> _onToggle(CourierToggleOnline e, Emitter<CourierState> emit) async {
     final newOnline = !state.isOnline;
     emit(state.copyWith(isOnline: newOnline));
-    await _api.updateOnlineStatus({'isOnline': newOnline});
+    try { await _api.updateOnlineStatus({'isOnline': newOnline}); } catch (_) {}
     if (newOnline) {
-      _startGps();
+      _startMockGps();
     } else {
-      _mockTimer?.cancel();
-      _mockTimer = null;
+      _gpsTimer?.cancel();
+      _gpsTimer = null;
     }
   }
 
@@ -106,17 +117,20 @@ class CourierBloc extends Bloc<CourierEvent, CourierState> {
       await _api.acceptOrder(e.orderId);
       final order = state.availableOrders.firstWhere((o) => o.id == e.orderId);
       _socket.subscribeToOrder(e.orderId);
-      emit(state.copyWith(activeOrder: order, deliveryStep: 0,
-        availableOrders: state.availableOrders.where((o) => o.id != e.orderId).toList()));
+      emit(state.copyWith(
+        activeOrder: order,
+        deliveryStep: 0,
+        availableOrders: state.availableOrders.where((o) => o.id != e.orderId).toList(),
+      ));
     } catch (err) {
       emit(state.copyWith(error: err.toString()));
     }
   }
 
   Future<void> _onNextStep(CourierNextStep e, Emitter<CourierState> emit) async {
-    final next = state.deliveryStep + 1;
     if (state.activeOrder == null) return;
-    await _api.updateDeliveryStep(state.activeOrder!.id, {'step': next});
+    final next = state.deliveryStep + 1;
+    try { await _api.updateDeliveryStep(state.activeOrder!.id, {'step': next}); } catch (_) {}
     if (next >= 2) {
       emit(state.copyWith(deliveryStep: next));
       await Future.delayed(const Duration(seconds: 2));
@@ -133,16 +147,18 @@ class CourierBloc extends Bloc<CourierEvent, CourierState> {
     }
   }
 
-  void _startGps() {
-    _gpsSub = 41.299496,
-    ).listen((pos) {
-      add(CourierLocationUpdated(lat: pos.latitude, lng: pos.longitude, bearing: pos.heading));
+  void _startMockGps() {
+    final rng = math.Random();
+    _gpsTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      _mockLat += (rng.nextDouble() - 0.5) * 0.001;
+      _mockLng += (rng.nextDouble() - 0.5) * 0.001;
+      add(CourierLocationUpdated(lat: _mockLat, lng: _mockLng));
     });
   }
 
   @override
   Future<void> close() {
-    _mockTimer?.cancel();
+    _gpsTimer?.cancel();
     return super.close();
   }
 }
