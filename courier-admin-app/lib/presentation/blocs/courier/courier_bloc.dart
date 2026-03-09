@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:math' as math;import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/network/api_client.dart';
@@ -70,7 +69,7 @@ class CourierState extends Equatable {
 class CourierBloc extends Bloc<CourierEvent, CourierState> {
   final ApiClient      _api;
   final SocketService  _socket;
-  StreamSubscription<Position>? _gpsSub;
+  Timer? _mockTimer;
 
   CourierBloc(this._api, this._socket) : super(const CourierState()) {
     on<CourierLoadOrders>(_onLoad);
@@ -97,8 +96,8 @@ class CourierBloc extends Bloc<CourierEvent, CourierState> {
     if (newOnline) {
       _startGps();
     } else {
-      await _gpsSub?.cancel();
-      _gpsSub = null;
+      _mockTimer?.cancel();
+      _mockTimer = null;
     }
   }
 
@@ -135,11 +134,7 @@ class CourierBloc extends Bloc<CourierEvent, CourierState> {
   }
 
   void _startGps() {
-    _gpsSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
+    _gpsSub = 41.299496,
     ).listen((pos) {
       add(CourierLocationUpdated(lat: pos.latitude, lng: pos.longitude, bearing: pos.heading));
     });
@@ -147,7 +142,7 @@ class CourierBloc extends Bloc<CourierEvent, CourierState> {
 
   @override
   Future<void> close() {
-    _gpsSub?.cancel();
+    _mockTimer?.cancel();
     return super.close();
   }
 }
