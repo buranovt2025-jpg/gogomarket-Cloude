@@ -54,8 +54,8 @@ class _ActiveDeliveryBody extends StatelessWidget {
           state.currentLat ?? AppConstants.defaultLat,
           state.currentLng ?? AppConstants.defaultLng,
         );
-        final sellerPos  = LatLng(order.sellerLat,   order.sellerLng);
-        final deliveryPos = LatLng(order.deliveryLat, order.deliveryLng);
+        final sellerPos  = LatLng(order.sellerLat ?? 41.299496, order.sellerLng ?? 69.240073);
+        final deliveryPos = LatLng(order.deliveryLat ?? 41.299496, order.deliveryLng ?? 69.240073);
 
         return Scaffold(
           backgroundColor: AppColors.bgDark,
@@ -130,11 +130,11 @@ class _ActiveDeliveryBody extends StatelessWidget {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(color: AppColors.bgCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(order.productTitle, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+                  Text(order.productTitle ?? 'Товар', style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 10),
-                  _RouteRow('🏪 Забрать у', order.sellerName, order.sellerAddress),
+                  _RouteRow('🏪 Забрать у', order.sellerName ?? '-', order.sellerAddress ?? '-'),
                   const Divider(color: AppColors.border, height: 16),
-                  _RouteRow('📍 Доставить', order.buyerName, order.deliveryAddress),
+                  _RouteRow('📍 Доставить', order.buyerName, order.deliveryAddress ?? order.address),
                 ]),
               ),
               const SizedBox(height: 12),

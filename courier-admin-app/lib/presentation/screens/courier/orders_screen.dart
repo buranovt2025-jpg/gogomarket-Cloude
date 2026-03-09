@@ -85,7 +85,7 @@ class _OrderCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(order.productTitle, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(order.productTitle ?? 'Товар', style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
             Text(order.buyerName, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
           ])),
           Container(
@@ -98,17 +98,17 @@ class _OrderCard extends StatelessWidget {
         Row(children: [
           const Text('🏪', style: TextStyle(fontSize: 13)),
           const SizedBox(width: 4),
-          Expanded(child: Text(order.sellerAddress, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Expanded(child: Text(order.sellerAddress ?? '-', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis)),
         ]),
         const SizedBox(height: 4),
         Row(children: [
           const Text('📍', style: TextStyle(fontSize: 13)),
           const SizedBox(width: 4),
-          Expanded(child: Text(order.deliveryAddress, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Expanded(child: Text(order.deliveryAddress ?? order.address, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis)),
         ]),
         const SizedBox(height: 12),
         Row(children: [
-          _Chip('${order.distanceKm.toStringAsFixed(1)} км', AppColors.blue),
+          _Chip('${(order.distanceKm ?? 0).toStringAsFixed(1)} км', AppColors.blue),
           const SizedBox(width: 8),
           _Chip('~${order.etaMinutes} мин', AppColors.orange),
           const Spacer(),

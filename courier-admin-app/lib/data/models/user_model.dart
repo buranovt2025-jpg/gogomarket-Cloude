@@ -10,6 +10,11 @@ class UserModel {
     this.name, required this.role, this.avatarUrl,
   });
 
+  bool get isCourier => role == 'courier';
+  bool get isAdmin   => role == 'admin';
+  bool get isSeller  => role == 'seller';
+  bool get isBuyer   => role == 'buyer';
+
   factory UserModel.fromJson(Map<String, dynamic> j) => UserModel(
     id:        j['id'] as String,
     phone:     j['phone'] as String,
