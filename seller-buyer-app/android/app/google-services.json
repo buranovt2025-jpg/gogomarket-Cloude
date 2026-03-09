@@ -1,0 +1,28 @@
+{
+  "project_info": {
+    "project_number": "617947540491",
+    "project_id": "gogomarket-cloud",
+    "storage_bucket": "gogomarket-cloud.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:617947540491:android:86c2d27b73488e17802b0e",
+        "android_client_info": { "package_name": "uz.gogomarket.app" }
+      },
+      "oauth_client": [],
+      "api_key": [{ "current_key": "AIzaSyB_npm_nu6Jlp04j-owr4OhEeNjMUuH2ZE" }],
+      "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:617947540491:android:0fe542d53d4e0ac5802b0e",
+        "android_client_info": { "package_name": "uz.gogomarket.courier" }
+      },
+      "oauth_client": [],
+      "api_key": [{ "current_key": "AIzaSyB_npm_nu6Jlp04j-owr4OhEeNjMUuH2ZE" }],
+      "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+    }
+  ],
+  "configuration_version": "1"
+}

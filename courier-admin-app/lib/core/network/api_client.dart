@@ -6,7 +6,6 @@ import '../../data/models/admin/seller_pending_model.dart';
 import '../../data/models/admin/flagged_content_model.dart';
 import '../../data/models/admin/admin_order_model.dart';
 
-@singleton
 class ApiClient {
   final Dio _dio;
 
@@ -91,4 +90,10 @@ class ApiClient {
 
   Future<void> approveWithdrawal(String id) =>
     _dio.post('/admin/withdrawals/$id/approve');
+
+  Future<void> updateOnlineStatus(Map<String, dynamic> body) =>
+    _dio.post('/courier/status', data: body);
+
+  Future<void> updateDeliveryStep(String orderId, Map<String, dynamic> body) =>
+    _dio.patch('/courier/orders/$orderId/step', data: body);
 }
