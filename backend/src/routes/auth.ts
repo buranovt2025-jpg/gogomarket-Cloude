@@ -27,7 +27,7 @@ router.post('/verify-otp', async (req, res) => {
   const { phone, code, role = 'buyer', name } = z.object({
     phone: z.string(),
     code: z.string().length(4),
-    role: z.enum(['buyer', 'seller']).optional(),
+    role: z.enum(['buyer', 'seller', 'courier', 'admin']).optional(),
     name: z.string().optional(),
   }).parse(req.body);
 
@@ -44,10 +44,10 @@ router.post('/verify-otp', async (req, res) => {
     }).returning();
   }
 
-  // Create seller profile if needed
-  if (role === 'seller' && user.role === 'buyer') {
-    await db.update(users).set({ role: 'seller' }).where(eq(users.id, user.id));
-    user.role = 'seller';
+  // Update role if needed
+  if (role && role !== 'buyer' && user.role === 'buyer') {
+    await db.update(users).set({ role }).where(eq(users.id, user.id));
+    user.role = role as any;
   }
 
   const tokenPayload = { userId: user.id, role: user.role };

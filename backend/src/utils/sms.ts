@@ -7,7 +7,13 @@ const OTP_PREFIX = 'otp:';
 const TOKEN_KEY  = 'eskiz:token';
 
 // Test numbers always get code 1234
-const TEST_PHONES = ['+998907654321', '+998901234567', '+998900000000'];
+const TEST_PHONES = [
+  '+998907654321', // Покупатель — Тимур
+  '+998901234567', // Продавец — Aisha Fashion
+  '+998900000001', // Курьер
+  '+998900000002', // Админ
+  '+998900000000', // резерв
+];
 
 export const generateOtp = (): string =>
   Math.floor(1000 + Math.random() * 9000).toString();
