@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'core/constants/app_colors.dart';
 import 'core/di/injection.dart';
 import 'core/router/app_router.dart';
+import 'core/services/push_service.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/cart/cart_bloc.dart';
 import 'presentation/blocs/theme/theme_cubit.dart';
@@ -25,10 +26,19 @@ void main() async {
 
   await configureDependencies();
 
-  // Firebase/Push — включи после добавления google-services.json
-  // _initFirebaseInBackground();
+  _initFirebaseInBackground();
 
   runApp(const GogoMarketApp());
+}
+
+void _initFirebaseInBackground() async {
+  try {
+    await Future.delayed(const Duration(milliseconds: 500));
+    await PushService.init();
+    debugPrint('[Firebase] ✅ Initialized');
+  } catch (e) {
+    debugPrint('[Firebase] Skipped: \$e');
+  }
 }
 
 class GogoMarketApp extends StatelessWidget {
