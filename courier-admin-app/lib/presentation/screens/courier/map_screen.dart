@@ -133,7 +133,7 @@ class _MapScreenBody extends StatelessWidget {
                           ]),
                         // Available order markers
                         MarkerLayer(markers: state.availableOrders.map((o) => Marker(
-                          point: LatLng(o.sellerLat, o.sellerLng),
+                          point: LatLng(o.sellerLat ?? 41.299496, o.sellerLng ?? 69.240073),
                           child: Container(
                             width: 36, height: 36,
                             decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle,
