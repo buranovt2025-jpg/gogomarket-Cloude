@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/di/injection.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/format.dart';
+import '../../blocs/auth/auth_bloc.dart';
 
 class SellerDashboardScreen extends StatelessWidget {
   const SellerDashboardScreen({super.key});
@@ -17,6 +21,15 @@ class SellerDashboardScreen extends StatelessWidget {
       body: SafeArea(child: CustomScrollView(slivers: [
         SliverToBoxAdapter(child: _Header()),
         SliverToBoxAdapter(child: _KpiRow()),
+        // Show weekly limits card only for tier 2
+        BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, state) {
+            if (state is AuthAuthenticated && state.user.tier == 2) {
+              return SliverToBoxAdapter(child: _WeeklyLimitsCard());
+            }
+            return const SliverToBoxAdapter(child: SizedBox.shrink());
+          },
+        ),
         SliverToBoxAdapter(child: _RevenueChart()),
         SliverToBoxAdapter(child: _QuickActions()),
         SliverToBoxAdapter(child: _RecentOrders()),
@@ -204,5 +217,197 @@ class _RecentOrders extends StatelessWidget {
       decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
       child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600)),
     );
+  }
+}
+
+// ── Weekly Limits Card ───────────────────────────────────────────────────────
+class _WeeklyLimitsCard extends StatefulWidget {
+  @override
+  State<_WeeklyLimitsCard> createState() => _WeeklyLimitsCardState();
+}
+
+class _WeeklyLimitsCardState extends State<_WeeklyLimitsCard> {
+  Map<String, dynamic>? _data;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final api = getIt<ApiClient>();
+      final data = await api.getSellerLimits();
+      if (mounted) setState(() { _data = data; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 4.h),
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: AppColors.bgCard,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.accent.withOpacity(0.25)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Text('🛍️', style: TextStyle(fontSize: 16.sp)),
+            SizedBox(width: 8.w),
+            Text('Лимиты на неделю',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14.sp, fontWeight: FontWeight.w700,
+              )),
+            const Spacer(),
+            GestureDetector(
+              onTap: () { setState(() { _loading = true; _error = null; }); _load(); },
+              child: Icon(Icons.refresh_rounded, size: 16.sp, color: AppColors.textMuted),
+            ),
+          ]),
+          SizedBox(height: 14.h),
+
+          if (_loading)
+            Center(child: SizedBox(
+              height: 36.h,
+              child: const CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2),
+            ))
+          else if (_error != null)
+            Center(child: Text('Ошибка загрузки', style: TextStyle(color: AppColors.red, fontSize: 12.sp)))
+          else if (_data != null) ...[
+            _LimitBar(
+              emoji: '📦',
+              label: 'Товары',
+              used:  (_data!['products']['used'] as num).toInt(),
+              limit: (_data!['products']['limit'] as num).toInt(),
+              color: AppColors.green,
+            ),
+            SizedBox(height: 10.h),
+            _LimitBar(
+              emoji: '🎬',
+              label: 'Рилсы',
+              used:  (_data!['reels']['used'] as num).toInt(),
+              limit: (_data!['reels']['limit'] as num).toInt(),
+              color: AppColors.blue,
+            ),
+            SizedBox(height: 10.h),
+            _LimitBar(
+              emoji: '📸',
+              label: 'Истории',
+              used:  (_data!['stories']['used'] as num).toInt(),
+              limit: (_data!['stories']['limit'] as num).toInt(),
+              color: AppColors.purple,
+            ),
+
+            // Expiring soon
+            if ((_data!['expiringSoon'] as List).isNotEmpty) ...[
+              SizedBox(height: 14.h),
+              Container(
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  color: AppColors.orange.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.orange.withOpacity(0.25)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Icon(Icons.schedule_rounded, size: 13.sp, color: AppColors.orange),
+                      SizedBox(width: 6.w),
+                      Text('Скоро удалятся',
+                        style: TextStyle(
+                          fontSize: 11.sp, fontWeight: FontWeight.w700,
+                          color: AppColors.orange,
+                        )),
+                    ]),
+                    SizedBox(height: 6.h),
+                    ...(_data!['expiringSoon'] as List).map((e) {
+                      final type = e['type'] == 'product' ? 'Товар' : 'Рилс';
+                      final days = (e['daysLeft'] as num).toInt();
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 3.h),
+                        child: Row(children: [
+                          Text('• $type — ', style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary)),
+                          Text(
+                            days == 0 ? 'сегодня' : 'через $days дн.',
+                            style: TextStyle(
+                              fontSize: 11.sp, fontWeight: FontWeight.w600,
+                              color: days == 0 ? AppColors.red : AppColors.orange,
+                            ),
+                          ),
+                        ]),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ],
+
+            SizedBox(height: 12.h),
+            // Reset hint
+            Center(child: Text(
+              'Лимиты обнуляются каждый понедельник',
+              style: TextStyle(fontSize: 10.sp, color: AppColors.textMuted),
+            )),
+          ],
+        ]),
+      ),
+    );
+  }
+}
+
+class _LimitBar extends StatelessWidget {
+  final String emoji, label;
+  final int used, limit;
+  final Color color;
+  const _LimitBar({
+    required this.emoji, required this.label,
+    required this.used, required this.limit, required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fraction = (used / limit).clamp(0.0, 1.0);
+    final isWarning = fraction >= 0.8;
+    final barColor = isWarning ? AppColors.orange : color;
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Text(emoji, style: TextStyle(fontSize: 13.sp)),
+        SizedBox(width: 6.w),
+        Text(label, style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary)),
+        const Spacer(),
+        Text(
+          '$used / $limit',
+          style: TextStyle(
+            fontSize: 12.sp, fontWeight: FontWeight.w700,
+            color: isWarning ? AppColors.orange : AppColors.textPrimary,
+          ),
+        ),
+        if (isWarning) ...[
+          SizedBox(width: 4.w),
+          Icon(Icons.warning_amber_rounded, size: 12.sp, color: AppColors.orange),
+        ],
+      ]),
+      SizedBox(height: 6.h),
+      ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: LinearProgressIndicator(
+          value: fraction,
+          minHeight: 5.h,
+          backgroundColor: barColor.withOpacity(0.12),
+          valueColor: AlwaysStoppedAnimation<Color>(barColor),
+        ),
+      ),
+    ]);
   }
 }

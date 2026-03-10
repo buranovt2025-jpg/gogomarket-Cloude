@@ -71,6 +71,81 @@ router.post('/register', authenticate, async (req, res) => {
   res.status(201).json(seller);
 });
 
+// GET /v1/sellers/me/limits — weekly usage for tier 2 sellers
+router.get('/me/limits', authenticate, requireSeller, async (req, res) => {
+  const [seller] = await db.select().from(sellers)
+    .where(eq(sellers.userId, req.user!.userId)).limit(1);
+  if (!seller) throw new AppError(404, 'Seller not found');
+
+  const userTier = req.user!.tier ?? 1;
+  const weekAgo  = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  // Count products created this week
+  const [{ productCount }] = await db.select({ productCount: sql<number>`count(*)::int` })
+    .from(products)
+    .where(and(eq(products.sellerId, seller.id), gte(products.createdAt, weekAgo)));
+
+  // Count reels created this week
+  const [{ reelCount }] = await db.select({ reelCount: sql<number>`count(*)::int` })
+    .from(reels)
+    .where(and(eq(reels.sellerId, seller.id), gte(reels.createdAt, weekAgo)));
+
+  // Count stories today
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  // Upcoming expirations — listings expiring in next 3 days
+  const in3days = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+  const { listingExpirations } = await import('../db/schema');
+  const { lte, isNull } = await import('drizzle-orm');
+
+  const expiringSoon = await db.select().from(listingExpirations)
+    .where(and(
+      eq(listingExpirations.userId, req.user!.userId),
+      lte(listingExpirations.expiresAt, in3days),
+      isNull(listingExpirations.deletedAt),
+    ));
+
+  if (userTier === 2) {
+    return res.json({
+      tier: 2,
+      products: { used: productCount,  limit: 10, resetsIn: _msUntilWeekReset() },
+      reels:    { used: reelCount,      limit: 3,  resetsIn: _msUntilWeekReset() },
+      stories:  { used: 0,              limit: 1,  resetsIn: _msUntilDayReset()  },
+      expiringSoon: expiringSoon.map(e => ({
+        type: e.listingType,
+        id:   e.listingId,
+        expiresAt: e.expiresAt,
+        daysLeft: Math.max(0, Math.ceil((e.expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000))),
+      })),
+    });
+  }
+
+  // Tier 3 — unlimited
+  return res.json({
+    tier: userTier,
+    products: { used: productCount, limit: null },
+    reels:    { used: reelCount,    limit: null },
+    stories:  { used: 0,            limit: null },
+    expiringSoon: [],
+  });
+});
+
+function _msUntilWeekReset(): number {
+  const now = new Date();
+  const nextMonday = new Date(now);
+  nextMonday.setDate(now.getDate() + (8 - now.getDay()) % 7 || 7);
+  nextMonday.setHours(0, 0, 0, 0);
+  return nextMonday.getTime() - now.getTime();
+}
+
+function _msUntilDayReset(): number {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  return tomorrow.getTime() - Date.now();
+}
+
 export default router;
 
 // POST /v1/sellers/verification — подача документов на верификацию

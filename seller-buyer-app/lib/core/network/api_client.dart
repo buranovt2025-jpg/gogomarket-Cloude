@@ -253,4 +253,9 @@ class ApiClient {
     });
   }
 
+  Future<Map<String, dynamic>> getSellerLimits() async {
+    final res = await _dio.get('/sellers/me/limits');
+    return Map<String, dynamic>.from(res.data);
+  }
+
 }
