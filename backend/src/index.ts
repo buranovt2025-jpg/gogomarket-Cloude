@@ -67,11 +67,14 @@ app.use('/api/push',          pushRouter);
 initSocket(server);
 
 // ── Error handler ─────────────────────────────────────────────────────────────
+import { startAutoExpireJob } from './jobs/autoExpire';
+
 app.use(errorHandler);
 
 const PORT = Number(process.env.PORT) || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   logger.info(`🚀 GogoMarket API running on :${PORT}`);
+  startAutoExpireJob();
 });
 
 export default app;

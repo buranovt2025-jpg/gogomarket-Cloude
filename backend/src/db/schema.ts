@@ -6,7 +6,8 @@ import { relations } from 'drizzle-orm';
 
 // ── Enums ────────────────────────────────────────────────────────
 export const userRoleEnum    = pgEnum('user_role',    ['buyer', 'seller', 'courier', 'admin', 'superadmin']);
-export const sellerPlanEnum  = pgEnum('seller_plan',  ['basic', 'start', 'business', 'shop']);
+export const sellerPlanEnum  = pgEnum('seller_plan',  ['private', 'basic', 'start', 'business', 'shop']);
+export const listingTypeEnum = pgEnum('listing_type', ['product', 'reel', 'story']);
 export const productStatusEnum = pgEnum('product_status', ['draft', 'pending', 'active', 'out_of_stock', 'rejected', 'deleted']);
 export const orderStatusEnum = pgEnum('order_status', ['new', 'confirmed', 'packed', 'delivery', 'delivered', 'done', 'cancelled', 'dispute']);
 export const messageTypeEnum = pgEnum('message_type', ['text', 'image', 'audio', 'offer', 'system']);
@@ -24,6 +25,7 @@ export const users = pgTable('users', {
   name:        varchar('name', { length: 120 }),
   avatarUrl:   text('avatar_url'),
   role:        userRoleEnum('role').notNull().default('buyer'),
+  tier:        integer('tier').notNull().default(1), // 1=buyer 2=private_seller 3=business
   isVerified:  boolean('is_verified').notNull().default(false),
   fcmToken:    text('fcm_token'),
   createdAt:   timestamp('created_at').defaultNow().notNull(),
@@ -78,6 +80,7 @@ export const products = pgTable('products', {
   sellerId:    uuid('seller_id').notNull().references(() => sellers.id),
   categoryId:  uuid('category_id').references(() => categories.id),
   title:       varchar('title', { length: 200 }).notNull(),
+  expiresAt:   timestamp('expires_at'), // null = no expiry (tier 3); set = tier 2 (7 days)
   description: text('description'),
   priceTiyin:  bigint('price_tiyin', { mode: 'number' }).notNull(),
   oldPriceTiyin: bigint('old_price_tiyin', { mode: 'number' }),
@@ -282,6 +285,22 @@ export const auditLogs = pgTable('audit_logs', {
   ip:         varchar('ip', { length: 45 }),
   createdAt:  timestamp('created_at').defaultNow().notNull(),
 });
+
+// Tracks tier-2 expiry + renewal (products and reels auto-delete after 7d)
+export const listingExpirations = pgTable('listing_expirations', {
+  id:          uuid('id').defaultRandom().primaryKey(),
+  listingType: listingTypeEnum('listing_type').notNull(),
+  listingId:   uuid('listing_id').notNull(),
+  userId:      uuid('user_id').notNull().references(() => users.id),
+  expiresAt:   timestamp('expires_at').notNull(),
+  notifiedAt:  timestamp('notified_at'),  // when "3 days left" push was sent
+  renewedAt:   timestamp('renewed_at'),   // if user paid to renew
+  deletedAt:   timestamp('deleted_at'),   // when auto-deleted by cron
+  createdAt:   timestamp('created_at').defaultNow().notNull(),
+}, (t) => ({
+  listingIdx: index('listing_exp_listing_idx').on(t.listingType, t.listingId),
+  expiryIdx:  index('listing_exp_expires_idx').on(t.expiresAt),
+}));
 
 // ── Relations ────────────────────────────────────────────────────
 export const usersRelations = relations(users, ({ one, many }) => ({

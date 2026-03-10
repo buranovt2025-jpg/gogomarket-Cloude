@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db';
-import { products, productPhotos, sellers } from '../db/schema';
+import { products, productPhotos, sellers, listingExpirations } from '../db/schema';
 import { authenticate, requireSeller } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
-import { eq, and, gte, lte, ilike, desc, asc, isNull } from 'drizzle-orm';
+import { eq, and, gte, lte, ilike, desc, asc, isNull, count, sql } from 'drizzle-orm';
 
 const router = Router();
 
@@ -68,31 +68,61 @@ router.get('/:id', async (req, res) => {
   res.json({ ...product, photos });
 });
 
-// POST /v1/products — seller only
+// POST /v1/products — tier 2+ only
 router.post('/', authenticate, requireSeller, async (req, res) => {
   const body = z.object({
-    title:       z.string().min(3).max(200),
-    description: z.string().max(2000).optional(),
-    categoryId:  z.string().uuid().optional(),
-    priceTiyin:  z.number().int().positive(),
+    title:        z.string().min(3).max(200),
+    description:  z.string().max(2000).optional(),
+    categoryId:   z.string().uuid().optional(),
+    priceTiyin:   z.number().int().positive(),
     oldPriceTiyin: z.number().int().positive().optional(),
-    stock:       z.number().int().min(0),
-    condition:   z.enum(['new', 'used']).default('new'),
+    stock:        z.number().int().min(0),
+    condition:    z.enum(['new', 'used']).default('new'),
     deliveryType: z.enum(['self', 'courier', 'both']).default('self'),
-    tags:        z.array(z.string()).max(10).optional(),
-    status:      z.enum(['draft', 'active']).default('draft'),
+    tags:         z.array(z.string()).max(10).optional(),
+    status:       z.enum(['draft', 'active']).default('draft'),
   }).parse(req.body);
 
-  // Get seller profile
   const [seller] = await db.select().from(sellers)
     .where(eq(sellers.userId, req.user!.userId)).limit(1);
-  if (!seller || !seller.isVerified) {
-    throw new AppError(403, 'Seller not verified');
+  if (!seller) throw new AppError(403, 'Seller profile not found');
+
+  const userTier = req.user!.tier ?? 1;
+  let expiresAt: Date | null = null;
+
+  // Tier 2: enforce 10 products/week limit + auto-expiry
+  if (userTier === 2) {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const [{ weeklyCount }] = await db.select({
+      weeklyCount: count(),
+    }).from(products).where(
+      and(
+        eq(products.sellerId, seller.id),
+        gte(products.createdAt, weekAgo),
+        isNull(products.deletedAt),
+      )
+    );
+
+    if (weeklyCount >= 10) {
+      throw new AppError(429, 'Weekly limit reached: 10 products per week for private sellers.');
+    }
+
+    expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
   }
 
   const [product] = await db.insert(products)
-    .values({ ...body, sellerId: seller.id })
+    .values({ ...body, sellerId: seller.id, expiresAt })
     .returning();
+
+  // Track expiry for tier 2
+  if (expiresAt) {
+    await db.insert(listingExpirations).values({
+      listingType: 'product',
+      listingId:   product.id,
+      userId:      req.user!.userId,
+      expiresAt,
+    });
+  }
 
   res.status(201).json(product);
 });

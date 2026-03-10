@@ -3,6 +3,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 export interface JwtPayload {
   userId: string;
   role: string;
+  tier: number;      // 1=buyer, 2=private_seller, 3=business
   sellerId?: string;
   courierId?: string;
 }

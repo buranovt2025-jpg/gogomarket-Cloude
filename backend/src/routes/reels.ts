@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { reels, sellers } from '../db/schema';
-import { authenticate } from '../middleware/auth';
-import { eq, desc } from 'drizzle-orm';
+import { reels, sellers, listingExpirations } from '../db/schema';
+import { authenticate, requireSeller } from '../middleware/auth';
+import { eq, desc, and, gte, isNull, count } from 'drizzle-orm';
 import { z } from 'zod';
 import { AppError } from '../middleware/errorHandler';
 
@@ -34,8 +34,8 @@ router.get('/', async (req, res) => {
   res.json({ items, total: items.length });
 });
 
-// POST /api/reels — создать рилс (продавец)
-router.post('/', authenticate, async (req, res) => {
+// POST /api/reels — tier 2+ only
+router.post('/', authenticate, requireSeller, async (req, res) => {
   const body = z.object({
     videoUrl:  z.string().url(),
     thumbUrl:  z.string().url().optional(),
@@ -43,10 +43,30 @@ router.post('/', authenticate, async (req, res) => {
     productId: z.string().uuid().optional(),
   }).parse(req.body);
 
-  // Находим продавца
   const [seller] = await db.select().from(sellers)
     .where(eq(sellers.userId, req.user!.userId));
   if (!seller) throw new AppError(403, 'Seller profile not found');
+
+  const userTier = req.user!.tier ?? 1;
+  let expiresAt: Date | null = null;
+
+  // Tier 2: enforce 3 reels/week limit + auto-expiry
+  if (userTier === 2) {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const [{ weeklyCount }] = await db.select({ weeklyCount: count() })
+      .from(reels)
+      .where(and(
+        eq(reels.sellerId, seller.id),
+        gte(reels.createdAt, weekAgo),
+        isNull(reels.deletedAt),
+      ));
+
+    if (weeklyCount >= 3) {
+      throw new AppError(429, 'Weekly limit reached: 3 reels per week for private sellers.');
+    }
+
+    expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  }
 
   const [reel] = await db.insert(reels).values({
     ...body,
@@ -54,7 +74,17 @@ router.post('/', authenticate, async (req, res) => {
     status:    'active',
     likeCount: 0,
     viewCount: 0,
-  }).returning();
+    expiresAt,
+  } as any).returning();
+
+  if (expiresAt) {
+    await db.insert(listingExpirations).values({
+      listingType: 'reel',
+      listingId:   reel.id,
+      userId:      req.user!.userId,
+      expiresAt,
+    });
+  }
 
   res.status(201).json(reel);
 });
