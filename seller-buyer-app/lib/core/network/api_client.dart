@@ -258,4 +258,20 @@ class ApiClient {
     return Map<String, dynamic>.from(res.data);
   }
 
+  Future<Map<String, dynamic>> getSellerProducts() async {
+    final res = await _dio.get('/sellers/me/products');
+    return Map<String, dynamic>.from(res.data);
+  }
+
+  Future<Map<String, dynamic>> renewListing({
+    required String listingType, // 'product' | 'reel'
+    required String listingId,
+  }) async {
+    final res = await _dio.post('/sellers/me/renew', data: {
+      'listingType': listingType,
+      'listingId':   listingId,
+    });
+    return Map<String, dynamic>.from(res.data);
+  }
+
 }

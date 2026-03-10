@@ -146,6 +146,83 @@ function _msUntilDayReset(): number {
   return tomorrow.getTime() - Date.now();
 }
 
+// GET /v1/sellers/me/products — seller's own products with expiry info
+router.get('/me/products', authenticate, requireSeller, async (req, res) => {
+  const [seller] = await db.select().from(sellers)
+    .where(eq(sellers.userId, req.user!.userId)).limit(1);
+  if (!seller) throw new AppError(404, 'Seller not found');
+
+  const { isNull: isNullFn } = await import('drizzle-orm');
+  const items = await db.select().from(products)
+    .where(and(eq(products.sellerId, seller.id), isNullFn(products.deletedAt)))
+    .orderBy(desc(products.createdAt))
+    .limit(50);
+
+  // Attach expiry info
+  const { listingExpirations } = await import('../db/schema');
+  const now = new Date();
+  const enriched = items.map(p => {
+    const daysLeft = p.expiresAt
+      ? Math.max(0, Math.ceil((p.expiresAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)))
+      : null;
+    return {
+      ...p,
+      daysLeft,
+      expiresAt: p.expiresAt ?? null,
+      canRenew: p.expiresAt != null && daysLeft !== null && daysLeft <= 3,
+    };
+  });
+
+  res.json({ items: enriched });
+});
+
+// POST /v1/sellers/me/renew — renew a tier-2 listing
+// In MVP: free renewal (monetization comes later via admin-set pricing)
+router.post('/me/renew', authenticate, requireSeller, async (req, res) => {
+  const { listingType, listingId } = z.object({
+    listingType: z.enum(['product', 'reel']),
+    listingId:   z.string().uuid(),
+  }).parse(req.body);
+
+  const [seller] = await db.select().from(sellers)
+    .where(eq(sellers.userId, req.user!.userId)).limit(1);
+  if (!seller) throw new AppError(404, 'Seller not found');
+
+  const { listingExpirations } = await import('../db/schema');
+  const { isNull: isNullFn } = await import('drizzle-orm');
+  const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  if (listingType === 'product') {
+    const [product] = await db.select().from(products)
+      .where(and(eq(products.id, listingId), eq(products.sellerId, seller.id))).limit(1);
+    if (!product) throw new AppError(404, 'Product not found');
+
+    await db.update(products)
+      .set({ expiresAt: newExpiry, status: 'active', updatedAt: new Date() })
+      .where(eq(products.id, listingId));
+
+  } else {
+    const [reel] = await db.select().from(reels)
+      .where(and(eq(reels.id, listingId), eq(reels.sellerId, seller.id))).limit(1);
+    if (!reel) throw new AppError(404, 'Reel not found');
+
+    await db.update(reels)
+      .set({ expiresAt: newExpiry, status: 'active' } as any)
+      .where(eq(reels.id, listingId));
+  }
+
+  // Update expiration record
+  await db.update(listingExpirations)
+    .set({ expiresAt: newExpiry, renewedAt: new Date() })
+    .where(and(
+      eq(listingExpirations.listingType, listingType),
+      eq(listingExpirations.listingId, listingId),
+      isNullFn(listingExpirations.deletedAt),
+    ));
+
+  res.json({ message: 'Renewed', expiresAt: newExpiry });
+});
+
 export default router;
 
 // POST /v1/sellers/verification — подача документов на верификацию

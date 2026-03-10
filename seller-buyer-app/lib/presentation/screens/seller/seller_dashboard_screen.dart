@@ -140,7 +140,7 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: EdgeInsets.symmetric(horizontal: 16.w),
     child: Row(children: [
-      _ActionBtn('📦', 'Товары',     Routes.addProduct),
+      _ActionBtn('📦', 'Товары',     Routes.myProducts),
       SizedBox(width: 10.w),
       _ActionBtn('🎬', 'Рилс',       Routes.createReel),
       SizedBox(width: 10.w),
