@@ -155,6 +155,10 @@ class ApiClient {
     await _dio.patch('/notifications/$id/read');
   }
 
+  Future<void> markAllNotificationsRead() async {
+    await _dio.patch('/notifications/read-all');
+  }
+
   // ── Upload ────────────────────────────────────────────────────────────────
   Future<String> uploadImage(String filePath) async {
     final formData = FormData.fromMap({

@@ -7,6 +7,7 @@
 import { db } from '../db';
 import { products, reels, listingExpirations, notifications } from '../db/schema';
 import { eq, and, lte, isNull, sql } from 'drizzle-orm';
+import { sendPushToUser } from '../services/push';
 
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
@@ -36,6 +37,13 @@ async function expireListings() {
       .set({ deletedAt: now })
       .where(eq(listingExpirations.id, exp.id));
 
+    // Push — объявление удалено
+    await sendPushToUser(exp.userId, {
+      title: '📦 Товар удалён',
+      body:  'Срок размещения истёк. Создайте новое объявление.',
+      data:  { type: 'deleted', listingType: 'product', listingId: exp.listingId },
+    });
+
     console.log(`[autoExpire] Deleted product ${exp.listingId}`);
   }
 
@@ -59,6 +67,12 @@ async function expireListings() {
     await db.update(listingExpirations)
       .set({ deletedAt: now })
       .where(eq(listingExpirations.id, exp.id));
+
+    await sendPushToUser(exp.userId, {
+      title: '🎬 Рилс удалён',
+      body:  'Срок размещения истёк. Создайте новый рилс.',
+      data:  { type: 'deleted', listingType: 'reel', listingId: exp.listingId },
+    });
 
     console.log(`[autoExpire] Deleted reel ${exp.listingId}`);
   }
@@ -89,6 +103,13 @@ async function expireListings() {
       title:    `Ваш ${typeLabel} истекает через ${daysLeft} д.`,
       body:     `Продлите объявление, чтобы оно не удалилось автоматически.`,
       meta:     { listingType: exp.listingType, listingId: exp.listingId },
+    });
+
+    // FCM push
+    await sendPushToUser(exp.userId, {
+      title: `⏰ Истекает через ${daysLeft} дн.`,
+      body:  `Ваш ${typeLabel} будет удалён. Продлите его в приложении.`,
+      data:  { type: 'expiry', listingType: exp.listingType, listingId: exp.listingId },
     });
 
     await db.update(listingExpirations)
