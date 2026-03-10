@@ -31,6 +31,7 @@ import '../../presentation/screens/seller/add_product_screen.dart';
 import '../../presentation/screens/seller/create_reel_screen.dart';
 import '../../presentation/screens/seller/seller_orders_screen.dart';
 import '../../presentation/screens/seller/seller_analytics_screen.dart';
+import '../../presentation/screens/profile/upgrade_tier_screen.dart';
 import '../../presentation/screens/pro/pro_screen.dart';
 
 class Routes {
@@ -77,6 +78,7 @@ class Routes {
   static const String createReel    = '/seller/reel/create';
   static const String sellerOrders  = '/seller/orders';
   static const String analytics     = '/seller/analytics';
+  static const String upgradeTier   = '/upgrade-tier';
 
   static const String pro           = '/pro';
 }
@@ -129,6 +131,7 @@ class AppRouter {
       GoRoute(path: Routes.createReel,      builder: (_, __) => const CreateReelScreen()),
       GoRoute(path: Routes.sellerOrders,    builder: (_, __) => const SellerOrdersScreen()),
       GoRoute(path: Routes.analytics,       builder: (_, __) => const SellerAnalyticsScreen()),
+      GoRoute(path: Routes.upgradeTier,     builder: (_, __) => const UpgradeTierScreen()),
       GoRoute(path: Routes.pro,             builder: (_, __) => const ProScreen()),
     ],
   );

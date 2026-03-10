@@ -27,3 +27,15 @@ class AuthError extends AuthState {
   const AuthError({required this.message});
   @override List<Object?> get props => [message];
 }
+
+class AuthUpgradingTier extends AuthState {
+  final UserModel user;
+  const AuthUpgradingTier({required this.user});
+  @override List<Object?> get props => [user.id];
+}
+
+class AuthTierUpgraded extends AuthState {
+  final UserModel user;
+  const AuthTierUpgraded({required this.user});
+  @override List<Object?> get props => [user.id, user.tier];
+}

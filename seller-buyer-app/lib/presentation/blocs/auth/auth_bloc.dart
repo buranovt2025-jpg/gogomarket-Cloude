@@ -19,6 +19,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthVerifyOtpEvent>(_onVerifyOtp);
     on<AuthLogoutEvent>(_onLogout);
     on<AuthUpdateUserEvent>(_onUpdateUser);
+    on<AuthUpgradeTierEvent>(_onUpgradeTier);
   }
 
   Future<void> _onCheck(AuthCheckEvent e, Emitter<AuthState> emit) async {
@@ -80,6 +81,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   void _onUpdateUser(AuthUpdateUserEvent e, Emitter<AuthState> emit) {
     if (state is AuthAuthenticated) {
       emit(AuthAuthenticated(user: e.user));
+    }
+  }
+
+  Future<void> _onUpgradeTier(AuthUpgradeTierEvent e, Emitter<AuthState> emit) async {
+    if (state is! AuthAuthenticated) return;
+    final current = (state as AuthAuthenticated).user;
+    emit(AuthUpgradingTier(user: current));
+    try {
+      final res = await _api.upgradeTier(tier: e.tier, shopName: e.shopName);
+      // Save new token
+      final box = Hive.box(AppConstants.tokenBox);
+      if (res['accessToken'] != null) {
+        await box.put(AppConstants.accessTokenKey, res['accessToken']);
+      }
+      final updatedUser = current.copyWith(tier: res['tier'] as int? ?? e.tier);
+      emit(AuthAuthenticated(user: updatedUser));
+      emit(AuthTierUpgraded(user: updatedUser));
+    } catch (err) {
+      emit(AuthAuthenticated(user: current));
+      emit(AuthError(message: _parseError(err)));
     }
   }
 

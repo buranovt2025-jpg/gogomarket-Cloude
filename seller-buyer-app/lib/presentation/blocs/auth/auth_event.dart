@@ -26,3 +26,10 @@ class AuthUpdateUserEvent extends AuthEvent {
   const AuthUpdateUserEvent(this.user);
   @override List<Object?> get props => [user];
 }
+
+class AuthUpgradeTierEvent extends AuthEvent {
+  final int tier;
+  final String? shopName;
+  const AuthUpgradeTierEvent({required this.tier, this.shopName});
+  @override List<Object?> get props => [tier, shopName];
+}

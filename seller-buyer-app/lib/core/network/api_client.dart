@@ -35,6 +35,17 @@ class ApiClient {
     return UserModel.fromJson(Map<String, dynamic>.from(res.data));
   }
 
+  Future<Map<String, dynamic>> upgradeTier({
+    required int tier,
+    String? shopName,
+  }) async {
+    final res = await _dio.post('/auth/upgrade-tier', data: {
+      'tier': tier,
+      if (shopName != null) 'shopName': shopName,
+    });
+    return Map<String, dynamic>.from(res.data);
+  }
+
   // ── Feed ──────────────────────────────────────────────────────────────────
   Future<PaginatedResponse<ProductModel>> getFeed({
     String mode = 'discover', int page = 1, int limit = 20, String? categoryId,

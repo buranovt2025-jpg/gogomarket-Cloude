@@ -113,16 +113,16 @@ class ProfileScreen extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: (isSeller ? AppColors.accent : AppColors.blue).withOpacity(0.12),
+                    color: (user?.tier == 3 ? AppColors.accent : user?.tier == 2 ? AppColors.green : AppColors.blue).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20.r),
                     border: Border.all(
-                      color: (isSeller ? AppColors.accent : AppColors.blue).withOpacity(0.25),
+                      color: (user?.tier == 3 ? AppColors.accent : user?.tier == 2 ? AppColors.green : AppColors.blue).withOpacity(0.25),
                     ),
                   ),
                   child: Text(
-                    isSeller ? '🏪 Продавец' : '🛍️ Покупатель',
+                    '${user?.tierEmoji ?? '👤'} ${user?.tierLabel ?? 'Покупатель'}',
                     style: TextStyle(
-                      color: isSeller ? AppColors.accent : AppColors.blue,
+                      color: user?.tier == 3 ? AppColors.accent : user?.tier == 2 ? AppColors.green : AppColors.blue,
                       fontSize: 12.sp, fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -157,6 +157,48 @@ class ProfileScreen extends StatelessWidget {
                   _Item('📦', 'Мои заказы продавца', AppColors.blue, () => context.push(Routes.sellerOrders)),
                   _Item('📈', 'Аналитика',        AppColors.purple, () => context.push(Routes.analytics)),
                 ]),
+                SizedBox(height: 12.h),
+              ],
+
+              // Upgrade banner for tier 1
+              if (!isSeller) ...[
+                GestureDetector(
+                  onTap: () => context.push(Routes.upgradeTier),
+                  child: Container(
+                    padding: EdgeInsets.all(16.w),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.green.withOpacity(0.15), AppColors.green.withOpacity(0.05)],
+                        begin: Alignment.centerLeft, end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18.r),
+                      border: Border.all(color: AppColors.green.withOpacity(0.3)),
+                    ),
+                    child: Row(children: [
+                      Container(
+                        width: 44.w, height: 44.w,
+                        decoration: BoxDecoration(
+                          color: AppColors.green.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Center(child: Text('🛍️', style: TextStyle(fontSize: 22.sp))),
+                      ),
+                      SizedBox(width: 14.w),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Начать продавать', style: TextStyle(
+                          fontSize: 14.sp, fontWeight: FontWeight.w800,
+                          color: AppColors.green,
+                        )),
+                        SizedBox(height: 2.h),
+                        Text('Бесплатно. Без верификации.', style: TextStyle(
+                          fontSize: 12.sp,
+                          color: isDark ? Colors.white.withOpacity(0.45) : Colors.black.withOpacity(0.45),
+                        )),
+                      ])),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 14.sp, color: AppColors.green),
+                    ]),
+                  ),
+                ),
                 SizedBox(height: 12.h),
               ],
 
