@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/di/injection.dart';
 import '../../../core/network/api_client.dart';
-import '../../../core/utils/format.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -254,4 +253,11 @@ class _NotifCard extends StatelessWidget {
   }
 }
 
-String _timeAgo(DateTime dt) => Format.timeAgo(dt);
+String _timeAgo(DateTime dt) {
+  final diff = DateTime.now().difference(dt);
+  if (diff.inMinutes < 1)  return 'только что';
+  if (diff.inMinutes < 60) return '${diff.inMinutes} мин. назад';
+  if (diff.inHours < 24)   return '${diff.inHours} ч. назад';
+  if (diff.inDays < 7)     return '${diff.inDays} дн. назад';
+  return '${dt.day}.${dt.month.toString().padLeft(2,'0')}.${dt.year}';
+}
