@@ -68,13 +68,25 @@ initSocket(server);
 
 // ── Error handler ─────────────────────────────────────────────────────────────
 import { startAutoExpireJob } from './jobs/autoExpire';
+import { runMigrations }      from './db/migrate';
 
 app.use(errorHandler);
 
 const PORT = Number(process.env.PORT) || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-  logger.info(`🚀 GogoMarket API running on :${PORT}`);
-  startAutoExpireJob();
-});
+
+runMigrations()
+  .then(() => {
+    server.listen(PORT, '0.0.0.0', () => {
+      logger.info(`🚀 GogoMarket API running on :${PORT}`);
+      startAutoExpireJob();
+    });
+  })
+  .catch(err => {
+    console.error('Migration failed, starting anyway:', err);
+    server.listen(PORT, '0.0.0.0', () => {
+      logger.info(`🚀 GogoMarket API running on :${PORT}`);
+      startAutoExpireJob();
+    });
+  });
 
 export default app;
