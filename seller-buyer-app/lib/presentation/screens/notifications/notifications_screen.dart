@@ -221,7 +221,7 @@ class _NotifCard extends StatelessWidget {
                 ))),
               SizedBox(width: 8.w),
               Text(
-                Format.timeAgo(createdAt),
+                _timeAgo(createdAt),
                 style: TextStyle(
                   fontSize: 10.sp,
                   color: isDark ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.3),
@@ -253,3 +253,5 @@ class _NotifCard extends StatelessWidget {
     );
   }
 }
+
+String _timeAgo(DateTime dt) => Format.timeAgo(dt);
